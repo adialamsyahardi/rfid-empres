@@ -15,39 +15,161 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Form Edit User</h5>
+                </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('users.update', $user) }}">
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('users.update', $user) }}" id="formUser">
                         @csrf
                         @method('PUT')
                         
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Cara Mengisi RFID:</strong> Klik di field RFID Card, lalu tap kartu RFID pada reader.
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">RFID Card <span class="text-danger">*</span></label>
-                                <input type="text" name="rfid_card" class="form-control @error('rfid_card') is-invalid @enderror" 
-                                       value="{{ old('rfid_card', $user->rfid_card) }}" required>
-                                @error('rfid_card')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="text" 
+                                       name="rfid_card" 
+                                       id="rfid_card"
+                                       class="form-control form-control-lg" 
+                                       value="{{ old('rfid_card', $user->rfid_card) }}" 
+                                       required
+                                       autocomplete="off">
+                                <small class="text-muted">Focus di sini, lalu tap kartu RFID</small>
                             </div>
                             
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
-                                       value="{{ old('name', $user->name) }}" required>
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="text" 
+                                       name="name" 
+                                       class="form-control" 
+                                       value="{{ old('name', $user->name) }}" 
+                                       required>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" 
-                                       value="{{ old('email', $user->email) }}" required>
-                                @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="email" 
+                                       name="email" 
+                                       class="form-control" 
+                                       value="{{ old('email', $user->email) }}" 
+                                       required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password Baru</label>
+                                <input type="password" 
+                                       name="password" 
+                                       class="form-control"
+                                       minlength="6">
+                                <small class="text-muted">Kosongkan jika tidak ingin mengubah password</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tempat Lahir</label>
+                                <input type="text" 
+                                       name="tempat_lahir" 
+                                       class="form-control" 
+                                       value="{{ old('tempat_lahir', $user->tempat_lahir) }}">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tanggal Lahir</label>
+                                <input type="date" 
+                                       name="tanggal_lahir" 
+                                       class="form-control" 
+                                       value="{{ old('tanggal_lahir', $user->tanggal_lahir?->format('Y-m-d')) }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Jenis Kelamin</label>
+                                <select name="jenis_kelamin" class="form-select">
+                                    <option value="">-- Pilih --</option>
+                                    <option value="L" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                                    <option value="P" {{ old('jenis_kelamin', $user->jenis_kelamin) == 'P' ? 'selected' : '' }}>Perempuan</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Limit Harian (Rp)</label>
+                                <input type="number" 
+                                       name="limit_harian" 
+                                       class="form-control" 
+                                       value="{{ old('limit_harian', $user->limit_harian) }}" 
+                                       min="0" 
+                                       step="1000">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Alamat</label>
+                            <textarea name="alamat" 
+                                      class="form-control" 
+                                      rows="3">{{ old('alamat', $user->alamat) }}</textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>Saldo Saat Ini:</strong> Rp {{ number_format($user->saldo, 0, ',', '.') }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-save me-2"></i>Update User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        // Cegah form submit saat Enter ditekan di input RFID
+        $('#rfid_card').on('keypress', function(e) {
+            if(e.which === 13) {
+                e.preventDefault();
+                // Setelah scan, pindah ke input nama
+                $('input[name="name"]').focus();
+            }
+        });
+
+        // Validasi sebelum submit
+        $('#formUser').on('submit', function(e) {
+            let rfid = $('#rfid_card').val().trim();
+            
+            if(!rfid || rfid.length < 3) {
+                e.preventDefault();
+                alert('RFID Card harus diisi! Tap kartu RFID pada reader.');
+                $('#rfid_card').focus();
+                return false;
+            }
+        });
+    });
+</script>
+                            
                             </div>
                             
                             <div class="col-md-6 mb-3">

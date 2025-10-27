@@ -16,7 +16,7 @@
                 <div class="card-body">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        Sinkronisasi jadwal sholat dari API Kemenag untuk wilayah Pacet, Mojokerto
+                        Sinkronisasi jadwal sholat dari API untuk wilayah Kediri (terdekat dengan Pacet, Mojokerto)
                     </div>
                     
                     <form id="formSync">
@@ -42,7 +42,7 @@
                             </select>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary w-100">
+                        <button type="submit" class="btn btn-primary w-100" id="btnSync">
                             <i class="fas fa-download me-2"></i>Sinkronisasi Sekarang
                         </button>
                     </form>
@@ -59,11 +59,11 @@
                     <ul class="list-unstyled mb-0">
                         <li class="mb-2">
                             <i class="fas fa-check text-success me-2"></i>
-                            Lokasi: Pacet, Mojokerto
+                            Lokasi: Kediri (Pacet, Mojokerto)
                         </li>
                         <li class="mb-2">
                             <i class="fas fa-check text-success me-2"></i>
-                            Sumber: API Kemenag
+                            Sumber: API MyQuran
                         </li>
                         <li class="mb-2">
                             <i class="fas fa-check text-success me-2"></i>
@@ -128,30 +128,81 @@
     $('#formSync').on('submit', function(e) {
         e.preventDefault();
         
-        let btn = $(this).find('button[type="submit"]');
+        let btn = $('#btnSync');
         let originalText = btn.html();
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Sinkronisasi...');
+        
+        $('#syncResult').html('');
         
         $.ajax({
             url: '{{ route("jadwal-sholat.sync") }}',
             method: 'POST',
             data: $(this).serialize(),
             success: function(response) {
-                $('#syncResult').html(`
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle me-2"></i>
-                        ${response.message}
-                    </div>
-                `);
-                setTimeout(() => location.reload(), 2000);
+                console.log('Success response:', response);
+                
+                let alertClass = response.success ? 'alert-success' : 'alert-warning';
+                let icon = response.success ? 'check-circle' : 'exclamation-triangle';
+                
+                let html = `
+                    <div class="alert ${alertClass}">
+                        <i class="fas fa-${icon} me-2"></i>
+                        <strong>${response.message}</strong>
+                `;
+                
+                if (response.data) {
+                    html += `
+                        <hr>
+                        <small>
+                            <strong>Lokasi:</strong> ${response.data.lokasi}<br>
+                            <strong>Daerah:</strong> ${response.data.daerah}<br>
+                            <strong>Total:</strong> ${response.data.total} hari<br>
+                            ${response.data.note ? '<em>' + response.data.note + '</em>' : ''}
+                        </small>
+                    `;
+                }
+                
+                html += `</div>`;
+                
+                $('#syncResult').html(html);
+                
+                if (response.success) {
+                    setTimeout(() => location.reload(), 2000);
+                }
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
+                console.error('Error details:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+                
+                let errorMsg = 'Terjadi kesalahan';
+                let debugInfo = '';
+                
+                try {
+                    let response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                    
+                    if (response.debug) {
+                        debugInfo = '<hr><small><strong>Debug Info:</strong><pre>' + 
+                                   JSON.stringify(response.debug, null, 2) + '</pre></small>';
+                    }
+                } catch(e) {
+                    errorMsg = xhr.statusText || errorMsg;
+                    debugInfo = '<hr><small>Status: ' + xhr.status + '<br>Response: ' + xhr.responseText.substring(0, 200) + '</small>';
+                }
+                
                 $('#syncResult').html(`
                     <div class="alert alert-danger">
                         <i class="fas fa-times-circle me-2"></i>
-                        ${xhr.responseJSON?.message || 'Terjadi kesalahan'}
+                        <strong>${errorMsg}</strong>
+                        ${debugInfo}
                     </div>
                 `);
+            },
+            complete: function() {
                 btn.prop('disabled', false).html(originalText);
             }
         });
