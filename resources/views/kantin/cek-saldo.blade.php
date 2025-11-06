@@ -247,223 +247,227 @@
         }
     });
 
-    function cekSaldo(rfid) {
-        console.log('🔍 Cek saldo RFID:', rfid);
-        
-        // Clear timer sebelumnya
-        if (autoHideTimer) {
-            clearTimeout(autoHideTimer);
-        }
-        
-        // Show loading
-        $('#loading').slideDown();
-        $('#result').slideUp();
-        
-        $.ajax({
-            url: '{{ route("kantin.scan-saldo") }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                rfid_card: rfid
-            },
-            success: function(response) {
-                console.log('✅ Data ditemukan:', response);
-                
-                $('#loading').slideUp();
-                playSound('success');
-                
-                // Ambil data
-                let user = response.data.user;
-                let saldo = response.data.saldo;
-                let limitAktif = response.data.limit_aktif;
-                let limitHarian = response.data.limit_harian;
-                
-                // Badge limit dengan warna dinamis
-                let limitBadge = '';
-                if (limitAktif == 1 || limitAktif === true) {
-                    limitBadge = `<span class="badge bg-info fs-6" id="limit_badge">
-                        <i class="fas fa-shield-alt me-1"></i>Limit Aktif: Rp ${formatRupiah(limitHarian)}
-                    </span>`;
-                } else {
-                    limitBadge = `<span class="badge bg-danger fs-6" id="limit_badge">
-                        <i class="fas fa-times-circle me-1"></i>Limit Tidak Aktif
-                    </span>`;
-                }
-                
-                // Ambil riwayat transaksi
-                getRiwayatTransaksi(user.id, function(transaksi) {
-                    // Tampilkan hasil
-                    $('#result').html(`
-                        <!-- CARD SALDO UTAMA -->
-                        <div class="card saldo-card shadow-lg mb-4">
-                            <div class="card-body text-center py-5">
-                                <div class="mb-3">
-                                    <i class="fas fa-user-circle fa-4x text-success"></i>
-                                </div>
-                                
-                                <h3 class="text-success mb-3">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    ${user.name}
-                                </h3>
-                                
-                                <div class="mb-4">
-                                    <small class="text-muted d-block mb-1">Saldo Saat Ini</small>
-                                    <h1 class="saldo-amount text-success mb-0">
-                                        Rp ${formatRupiah(saldo)}
-                                    </h1>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    ${limitBadge}
-                                </div>
-                                
-                                <hr class="my-3">
-                                
-                                <div class="row text-start">
-                                    <div class="col-md-6 mb-2">
-                                        <small class="text-muted d-block">
-                                            <i class="fas fa-id-card me-1"></i>RFID Card
-                                        </small>
-                                        <strong>${user.rfid_card}</strong>
-                                    </div>
-                                    <div class="col-md-6 mb-2">
-                                        <small class="text-muted d-block">
-                                            <i class="fas fa-envelope me-1"></i>Email
-                                        </small>
-                                        <strong>${user.email}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- RIWAYAT TRANSAKSI -->
-                        <div class="card shadow-sm mb-4">
-                            <div class="card-header bg-white">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-history me-2"></i>
-                                    5 Transaksi Terakhir
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                ${transaksi}
-                            </div>
-                        </div>
-                        
-                        <!-- BUTTON ACTIONS -->
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-center mb-3">
-                            <button class="btn btn-primary btn-action" onclick="printSaldo()">
-                                <i class="fas fa-print me-2"></i>Print Info Saldo
-                            </button>
-                            <button class="btn btn-success btn-action" onclick="scanLagi()">
-                                <i class="fas fa-redo me-2"></i>Scan Kartu Lagi
-                            </button>
-                        </div>
-                    `).slideDown();
-                    
-                    // Auto-hide setelah 30 detik
-                    autoHideTimer = setTimeout(() => {
-                        scanLagi();
-                    }, 30000);
-                });
-            },
-            error: function(xhr) {
-                console.log('❌ Error:', xhr.status, xhr.responseJSON);
-                
-                $('#loading').slideUp();
-                playSound('error');
-                
-                let errorMessage = 'Kartu RFID tidak terdaftar!';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-                
-                showError(errorMessage, rfid);
-                
-                // Re-focus
-                setTimeout(() => $('#rfid_card').focus(), 100);
-            }
-        });
+function cekSaldo(rfid) {
+    console.log('🔍 Cek saldo RFID:', rfid);
+    
+    // Clear timer sebelumnya
+    if (autoHideTimer) {
+        clearTimeout(autoHideTimer);
     }
+    
+    // Show loading
+    $('#loading').slideDown();
+    $('#result').slideUp();
+    
+    $.ajax({
+        url: '{{ route("kantin.scan-saldo") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            rfid_card: rfid
+        },
+        success: function(response) {
+            console.log('✅ Data ditemukan:', response);
+            
+            $('#loading').slideUp();
+            playSound('success');
+            
+            // Ambil data
+            let user = response.data.user;
+            let saldo = response.data.saldo;
+            let limitAktif = response.data.limit_aktif;
+            let limitHarian = response.data.limit_harian;
+            
+            // Badge limit dengan warna dinamis
+            let limitBadge = '';
+            if (limitAktif == 1 || limitAktif === true) {
+                limitBadge = `<span class="badge bg-info fs-6" id="limit_badge">
+                    <i class="fas fa-shield-alt me-1"></i>Limit Aktif: Rp ${formatRupiah(limitHarian)}
+                </span>`;
+            } else {
+                limitBadge = `<span class="badge bg-danger fs-6" id="limit_badge">
+                    <i class="fas fa-times-circle me-1"></i>Limit Tidak Aktif
+                </span>`;
+            }
+            
+            // ✅ Ambil riwayat transaksi dari backend
+            getRiwayatTransaksi(user.id, function(transaksiHtml) {
+                // Tampilkan hasil
+                $('#result').html(`
+                    <!-- CARD SALDO UTAMA -->
+                    <div class="card saldo-card shadow-lg mb-4">
+                        <div class="card-body text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-user-circle fa-4x text-success"></i>
+                            </div>
+                            
+                            <h3 class="text-success mb-3">
+                                <i class="fas fa-check-circle me-2"></i>
+                                ${user.name}
+                            </h3>
+                            
+                            <div class="mb-4">
+                                <small class="text-muted d-block mb-1">Saldo Saat Ini</small>
+                                <h1 class="saldo-amount text-success mb-0">
+                                    Rp ${formatRupiah(saldo)}
+                                </h1>
+                            </div>
+                            
+                            <div class="mb-3">
+                                ${limitBadge}
+                            </div>
+                            
+                            <hr class="my-3">
+                            
+                            <div class="row text-start">
+                                <div class="col-md-6 mb-2">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-id-card me-1"></i>RFID Card
+                                    </small>
+                                    <strong>${user.rfid_card}</strong>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-envelope me-1"></i>Email
+                                    </small>
+                                    <strong>${user.email}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- RIWAYAT TRANSAKSI -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-history me-2"></i>
+                                5 Transaksi Terakhir
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            ${transaksiHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- BUTTON ACTIONS -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center mb-3">
+                        <button class="btn btn-primary btn-action" onclick="printSaldo()">
+                            <i class="fas fa-print me-2"></i>Print Info Saldo
+                        </button>
+                        <button class="btn btn-success btn-action" onclick="scanLagi()">
+                            <i class="fas fa-redo me-2"></i>Scan Kartu Lagi
+                        </button>
+                    </div>
+                `).slideDown();
+                
+                // Auto-hide setelah 30 detik
+                autoHideTimer = setTimeout(() => {
+                    scanLagi();
+                }, 30000);
+            });
+        },
+        error: function(xhr) {
+            console.log('❌ Error:', xhr.status, xhr.responseJSON);
+            
+            $('#loading').slideUp();
+            playSound('error');
+            
+            let errorMessage = 'Kartu RFID tidak terdaftar!';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            
+            showError(errorMessage, rfid);
+            
+            // Re-focus
+            setTimeout(() => $('#rfid_card').focus(), 100);
+        }
+    });
+}
 
-    // ============================================
-    // 📊 GET RIWAYAT TRANSAKSI
-    // ============================================
-    function getRiwayatTransaksi(userId, callback) {
-        $.ajax({
-            url: '{{ route("kantin.riwayat") }}',
-            method: 'GET',
-            success: function(html) {
-                // Parse HTML untuk ambil transaksi user ini (5 terakhir)
-                let transaksiHtml = '';
-                let $html = $(html);
-                let count = 0;
-                
-                $html.find('tbody tr').each(function() {
-                    if (count >= 5) return false;
-                    
-                    let rowUserId = $(this).data('user-id'); // Perlu tambah di riwayat blade
-                    let userText = $(this).find('td:eq(1)').text(); // Nama user
-                    
-                    // Cek apakah transaksi milik user ini
-                    let jenis = $(this).find('td:eq(2)').text().toLowerCase();
-                    let jumlah = $(this).find('td:eq(3)').text();
-                    let waktu = $(this).find('td:eq(4)').text();
-                    
-                    if (jenis.includes('top') || jenis.includes('topup')) {
-                        transaksiHtml += `
-                            <div class="transaksi-item transaksi-topup p-3 mb-2 rounded">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="fas fa-arrow-up text-success me-2"></i>
-                                        <strong>Top Up</strong>
-                                    </div>
-                                    <div class="text-end">
-                                        <strong class="text-success">+ ${jumlah}</strong><br>
-                                        <small class="text-muted">${waktu}</small>
-                                    </div>
+// ============================================
+// 📊 GET RIWAYAT TRANSAKSI (✅ FIXED)
+// ============================================
+function getRiwayatTransaksi(userId, callback) {
+    $.ajax({
+        url: '{{ route("kantin.transaksi-user") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            user_id: userId
+        },
+        success: function(response) {
+            console.log('✅ Transaksi loaded:', response);
+            
+            if (!response.success || response.data.length === 0) {
+                callback(`
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">Belum ada transaksi</p>
+                    </div>
+                `);
+                return;
+            }
+            
+            let transaksiHtml = '';
+            
+            response.data.forEach(function(t) {
+                // ✅ CEK JENIS TRANSAKSI DARI DATABASE
+                if (t.jenis === 'top_up' || t.jenis === 'topup') {
+                    // TOP UP (HIJAU, PLUS)
+                    transaksiHtml += `
+                        <div class="transaksi-item transaksi-topup p-3 mb-2 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-arrow-up text-success me-2"></i>
+                                    <strong>Top Up</strong>
+                                    ${t.keterangan ? `<br><small class="text-muted">${t.keterangan}</small>` : ''}
+                                </div>
+                                <div class="text-end">
+                                    <strong class="text-success">+ Rp ${formatRupiah(t.jumlah)}</strong><br>
+                                    <small class="text-muted" title="${t.waktu}">
+                                        <i class="far fa-clock me-1"></i>${t.waktu_relative}
+                                    </small>
                                 </div>
                             </div>
-                        `;
-                    } else {
-                        transaksiHtml += `
-                            <div class="transaksi-item transaksi-bayar p-3 mb-2 rounded">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="fas fa-arrow-down text-danger me-2"></i>
-                                        <strong>Pembayaran</strong>
-                                    </div>
-                                    <div class="text-end">
-                                        <strong class="text-danger">- ${jumlah}</strong><br>
-                                        <small class="text-muted">${waktu}</small>
-                                    </div>
+                        </div>
+                    `;
+                } else {
+                    // PEMBAYARAN (MERAH, MINUS)
+                    transaksiHtml += `
+                        <div class="transaksi-item transaksi-bayar p-3 mb-2 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-arrow-down text-danger me-2"></i>
+                                    <strong>Pembayaran</strong>
+                                    ${t.keterangan ? `<br><small class="text-muted">${t.keterangan}</small>` : ''}
+                                </div>
+                                <div class="text-end">
+                                    <strong class="text-danger">- Rp ${formatRupiah(t.jumlah)}</strong><br>
+                                    <small class="text-muted" title="${t.waktu}">
+                                        <i class="far fa-clock me-1"></i>${t.waktu_relative}
+                                    </small>
                                 </div>
                             </div>
-                        `;
-                    }
-                    count++;
-                });
-                
-                if (transaksiHtml === '') {
-                    transaksiHtml = `
-                        <div class="text-center text-muted py-3">
-                            <i class="fas fa-inbox fa-2x mb-2"></i>
-                            <p class="mb-0">Belum ada transaksi</p>
                         </div>
                     `;
                 }
-                
-                callback(transaksiHtml);
-            },
-            error: function() {
-                callback(`
-                    <div class="alert alert-warning mb-0">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Tidak dapat memuat riwayat transaksi
-                    </div>
-                `);
-            }
-        });
-    }
+            });
+            
+            callback(transaksiHtml);
+        },
+        error: function(xhr) {
+            console.log('❌ Error load transaksi:', xhr);
+            
+            callback(`
+                <div class="alert alert-warning mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Tidak dapat memuat riwayat transaksi
+                </div>
+            `);
+        }
+    });
+}
 
     // ============================================
     // ❌ SHOW ERROR

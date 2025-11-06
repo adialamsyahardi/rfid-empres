@@ -269,4 +269,30 @@ class KantinController extends Controller
             ], 500);
         }
     }
+    public function getTransaksiUser(Request $request)
+{
+    $request->validate([
+        'user_id' => 'required|exists:users,id'
+    ]);
+
+    // Ambil 5 transaksi terakhir user ini
+    $transaksi = TransaksiKantin::where('user_id', $request->user_id)
+        ->orderBy('created_at', 'desc')
+        ->limit(5)
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $transaksi->map(function($t) {
+            return [
+                'id' => $t->id,
+                'jenis' => $t->jenis, // 'top_up' atau 'pembayaran'
+                'jumlah' => $t->jumlah,
+                'keterangan' => $t->keterangan,
+                'waktu' => $t->created_at->format('d M Y H:i'),
+                'waktu_relative' => $t->created_at->diffForHumans()
+            ];
+        })
+    ]);
+}
 }
