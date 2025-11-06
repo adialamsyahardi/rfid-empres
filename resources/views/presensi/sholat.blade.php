@@ -12,50 +12,43 @@
     .user-sudah-absen { background-color: #d4edda !important; }
     .user-belum-absen { background-color: #f8d7da !important; }
     
-    /* ✅ Animasi notifikasi masuk */
-    @keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         25% { transform: translateX(-10px); }
         75% { transform: translateX(10px); }
     }
     
-    /* ✅ Notifikasi dengan animasi */
-    .alert-slide-in {
-        animation: slideInRight 0.3s ease-out;
-    }
-    
     .alert-shake {
         animation: shake 0.5s ease-out;
     }
     
-    /* ✅ Banner permanen - tidak hilang */
     .banner-permanen {
-        position: sticky;
-        top: 0;
+        position: relative;
         z-index: 100;
         margin-bottom: 1rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: #fff !important;
     }
     
-    /* Highlight input aktif */
+    .alert-batas-presensi {
+        border-left: 5px solid #0dcaf0 !important;
+        background-color: #cff4fc !important;
+        color: #055160 !important;
+        margin-top: 1rem !important;
+        margin-bottom: 0 !important;
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        animation: none !important;
+        transition: none !important;
+    }
+    
     .scan-input:focus {
         border: 2px solid #28a745;
         box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
         transition: all 0.3s ease;
     }
     
-    /* ✅ Pulse loading yang smooth */
     @keyframes pulseLoading {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.6; }
@@ -63,6 +56,106 @@
     
     .loading-indicator {
         animation: pulseLoading 1s ease-in-out infinite;
+    }
+    
+    .notif-absensi {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    /* ✅ Style untuk tabel gabungan */
+    .table td {
+        vertical-align: middle;
+    }
+
+    .user-sudah-absen:hover {
+        background-color: #c3e6cb !important;
+        cursor: pointer;
+    }
+
+    .user-belum-absen:hover {
+        background-color: #f1c1c8 !important;
+    }
+
+    .detail-row td {
+        padding: 0 !important;
+    }
+
+    .badge-sm {
+        padding: 2px 5px;
+        font-size: 9px;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .detail-row {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    /* Button kecil untuk tambah keterangan */
+    .btn-xs {
+        padding: 2px 5px !important;
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+    }
+
+    .btn-xs i {
+        font-size: 9px !important;
+    }
+
+    /* Hover effect untuk cell belum absen */
+    .user-belum-absen:hover .btn-xs {
+        background-color: #6c757d !important;
+        color: white !important;
+        border-color: #6c757d !important;
+    }
+
+    /* ✅ Style untuk search & highlight */
+    .highlight-row {
+        background-color: #fff3cd !important;
+        border: 2px solid #ffc107 !important;
+        box-shadow: 0 0 10px rgba(255, 193, 7, 0.5) !important;
+        animation: highlightPulse 1s ease-in-out;
+    }
+
+    @keyframes highlightPulse {
+        0%, 100% { 
+            background-color: #fff3cd;
+            transform: scale(1);
+        }
+        50% { 
+            background-color: #ffe69c;
+            transform: scale(1.02);
+        }
+    }
+
+    .hidden-row {
+        display: none !important;
+    }
+
+    #searchUser:focus {
+        border: 2px solid #0d6efd;
+        box-shadow: 0 0 10px rgba(13, 110, 253, 0.3);
+    }
+
+    .search-no-result {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+
+    /* Smooth scroll */
+    html {
+        scroll-behavior: smooth;
     }
 </style>
 @endsection
@@ -109,8 +202,7 @@
                         </div>
                     </div>
                     
-                    {{-- ✅ BANNER BATAS PRESENSI - PERMANEN --}}
-                    <div class="alert alert-info mt-3 mb-0" style="border-left: 5px solid #0dcaf0;">
+                    <div class="alert alert-info alert-batas-presensi">
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Batas Presensi:</strong> {{ $toleransi ? $toleransi->toleransi_keterlambatan : 20 }} menit setelah adzan
                     </div>
@@ -153,7 +245,6 @@
                            placeholder="Scan kartu RFID..."
                            autocomplete="off">
                     
-                    {{-- ✅ NOTIFIKASI PERMANEN - Tidak hilang sampai ditimpa --}}
                     <div id="result_{{ $waktu }}" class="mt-2"></div>
                 </div>
             </div>
@@ -161,24 +252,73 @@
         @endforeach
     </div>
 
-    <!-- Tabel Status Absensi Semua User -->
+    <!-- ✅ SEARCH BOX -->
     <div class="card mt-4 shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Status Absensi Semua User Hari Ini</h5>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-primary text-white">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" 
+                               id="searchUser" 
+                               class="form-control" 
+                               placeholder="Cari nama atau RFID user..."
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" 
+                                type="button" 
+                                id="clearSearch"
+                                title="Clear">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Ketik nama atau RFID, hasil akan muncul otomatis (Ctrl+F)
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span class="badge bg-info" id="searchResult">
+                        Total User: <strong>{{ \App\Models\User::where('role', 'user')->count() }}</strong>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ TABEL GABUNGAN - Status Absensi + Detail + Edit Inline -->
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-2"></i>
+                Status & Detail Presensi Sholat Hari Ini
+            </h5>
+            <div>
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Hadir: <strong id="total-hadir">{{ $presensi->count() }}</strong>
+                </span>
+                <span class="badge bg-danger ms-2">
+                    <i class="fas fa-times-circle me-1"></i>
+                    Belum: <strong id="total-belum">{{ (\App\Models\User::where('role', 'user')->count() * 5) - $presensi->count() }}</strong>
+                </span>
+            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-sm table-bordered">
+                <table class="table table-sm table-bordered table-hover" id="tabelPresensi">
                     <thead class="table-light">
                         <tr>
-                            <th>No</th>
+                            <th width="50">No</th>
                             <th>Nama</th>
-                            <th class="text-center">Subuh</th>
-                            <th class="text-center">Dzuhur</th>
-                            <th class="text-center">Ashar</th>
-                            <th class="text-center">Maghrib</th>
-                            <th class="text-center">Isya</th>
-                            <th class="text-center">Total</th>
+                            <th class="text-center" width="120">Subuh</th>
+                            <th class="text-center" width="120">Dzuhur</th>
+                            <th class="text-center" width="120">Ashar</th>
+                            <th class="text-center" width="120">Maghrib</th>
+                            <th class="text-center" width="120">Isya</th>
+                            <th class="text-center" width="80">Total</th>
+                            <th class="text-center" width="100">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -192,96 +332,137 @@
                             $waktuSholat = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
                             $totalHadir = 0;
                         @endphp
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td><strong>{{ $user->name }}</strong></td>
+                        <tr data-user-id="{{ $user->id }}">
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td>
+                                <strong>{{ $user->name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ $user->rfid_card }}</small>
+                            </td>
                             @foreach($waktuSholat as $waktu)
                                 @php
                                     $p = $userPresensi->where('waktu_sholat', $waktu)->first();
                                     $hadir = $p != null;
                                     if ($hadir) $totalHadir++;
                                 @endphp
-                                <td class="text-center {{ $hadir ? 'user-sudah-absen' : 'user-belum-absen' }}">
+                                <td class="text-center {{ $hadir ? 'user-sudah-absen' : 'user-belum-absen' }}" 
+                                    data-waktu="{{ $waktu }}"
+                                    style="cursor: {{ $hadir ? 'pointer' : 'default' }};"
+                                    title="{{ $hadir ? 'Klik untuk edit' : 'Belum absen' }}">
                                     @if($hadir)
-                                        <i class="fas fa-check-circle text-success"></i>
-                                        <br><small>{{ $p->jam_presensi }}</small>
-                                        @if($p->terlambat)
-                                            <br><small class="text-danger">(+{{ $p->menit_terlambat }}m)</small>
-                                        @endif
+                                        <div class="d-flex flex-column align-items-center">
+                                            <i class="fas fa-check-circle text-success fs-5"></i>
+                                            <small class="fw-bold">{{ $p->jam_presensi ?? '-' }}</small>
+                                            @if($p->terlambat)
+                                                <small class="text-danger">(+{{ $p->menit_terlambat }}m)</small>
+                                            @endif
+                                            <span class="badge badge-sm bg-{{ $p->keterangan == 'hadir' ? 'success' : ($p->keterangan == 'izin' ? 'info' : ($p->keterangan == 'sakit' ? 'warning' : 'secondary')) }} mt-1" style="font-size: 9px;">
+                                                {{ ucfirst(str_replace('_', ' ', $p->keterangan)) }}
+                                            </span>
+                                        </div>
                                     @else
-                                        <i class="fas fa-times-circle text-danger"></i>
+                                        <div class="d-flex flex-column align-items-center">
+                                            <i class="fas fa-times-circle text-danger fs-5"></i>
+                                            <br>
+                                            <button class="btn btn-xs btn-outline-secondary mt-1" 
+                                                    onclick="tambahKeteranganManual({{ $user->id }}, '{{ $waktu }}')"
+                                                    title="Tambah Keterangan"
+                                                    style="font-size: 10px; padding: 2px 5px;">
+                                                <i class="fas fa-plus-circle me-1"></i>Tambah
+                                            </button>
+                                        </div>
                                     @endif
                                 </td>
                             @endforeach
-                            <td class="text-center"><strong>{{ $totalHadir }}/5</strong></td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabel Detail Presensi Sholat -->
-    <div class="card mt-4 shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Detail Presensi Sholat Hari Ini</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>No</th>
-                            <th>Nama</th>
-                            <th>Waktu Sholat</th>
-                            <th>Jam Adzan</th>
-                            <th>Jam Presensi</th>
-                            <th>Status</th>
-                            <th>Keterangan</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($presensi as $index => $p)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $p->user->name }}</td>
-                            <td>
-                                <span class="badge bg-info">
-                                    {{ ucfirst($p->waktu_sholat) }}
-                                </span>
+                            <td class="text-center">
+                                <strong class="fs-5">{{ $totalHadir }}/5</strong>
+                                <br>
+                                @php
+                                    $persentase = ($totalHadir / 5) * 100;
+                                    $badgeColor = $persentase >= 80 ? 'success' : ($persentase >= 60 ? 'warning' : 'danger');
+                                @endphp
+                                <span class="badge bg-{{ $badgeColor }}">{{ number_format($persentase, 0) }}%</span>
                             </td>
-                            <td>{{ $jadwal ? $jadwal->{$p->waktu_sholat} : '-' }}</td>
-                            <td>
-                                {{ $p->jam_presensi }}
-                                @if($p->terlambat)
-                                    <br><small class="text-danger">(+{{ $p->menit_terlambat }} menit)</small>
-                                @endif
-                            </td>
-                            <td>
-                                @if($p->terlambat)
-                                    <span class="badge bg-warning">Terlambat</span>
-                                @else
-                                    <span class="badge bg-success">Tepat Waktu</span>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ $p->keterangan == 'hadir' ? 'success' : ($p->keterangan == 'izin' ? 'info' : ($p->keterangan == 'sakit' ? 'warning' : 'secondary')) }}">
-                                    {{ ucfirst(str_replace('_', ' ', $p->keterangan)) }}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="updateKeterangan({{ $p->id }})">
-                                    <i class="fas fa-edit"></i> Ubah
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-info" onclick="toggleDetail({{ $user->id }})" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
                                 </button>
                             </td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center text-muted">Belum ada presensi sholat hari ini</td>
+                        <!-- ✅ ROW DETAIL (COLLAPSED) -->
+                        <tr id="detail-{{ $user->id }}" class="detail-row" style="display: none;">
+                            <td colspan="9" class="bg-light">
+                                <div class="p-3">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Detail Presensi: <strong>{{ $user->name }}</strong>
+                                    </h6>
+                                    <div class="row">
+                                        @foreach($waktuSholat as $waktu)
+                                            @php
+                                                $p = $userPresensi->where('waktu_sholat', $waktu)->first();
+                                            @endphp
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card {{ $p ? 'border-success' : 'border-danger' }}">
+                                                    <div class="card-body p-2">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <h6 class="mb-0">
+                                                                    <i class="fas fa-mosque me-1"></i>
+                                                                    {{ ucfirst($waktu) }}
+                                                                </h6>
+                                                                @if($p)
+                                                                    <small class="text-muted">
+                                                                        Adzan: {{ $jadwal ? $jadwal->{$waktu} : '-' }} | 
+                                                                        Presensi: <strong>{{ $p->jam_presensi ?? '-' }}</strong>
+                                                                    </small>
+                                                                    @if($p->terlambat)
+                                                                        <br>
+                                                                        <span class="badge bg-warning text-dark">
+                                                                            Terlambat +{{ $p->menit_terlambat }} menit
+                                                                        </span>
+                                                                    @else
+                                                                        <br>
+                                                                        <span class="badge bg-success">Tepat Waktu</span>
+                                                                    @endif
+                                                                @else
+                                                                    <small class="text-danger">Belum absen</small>
+                                                                @endif
+                                                            </div>
+                                                            @if($p)
+                                                            <div>
+                                                                <button class="btn btn-sm btn-primary" 
+                                                                        onclick="editKeterangan({{ $p->id }}, '{{ $p->keterangan }}')"
+                                                                        title="Edit Keterangan">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                            </div>
+                                                            @else
+                                                            <div>
+                                                                <button class="btn btn-sm btn-outline-secondary" 
+                                                                        onclick="tambahKeteranganManual({{ $user->id }}, '{{ $waktu }}')"
+                                                                        title="Tambah Keterangan">
+                                                                    <i class="fas fa-plus-circle"></i>
+                                                                </button>
+                                                            </div>
+                                                            @endif
+                                                        </div>
+                                                        @if($p)
+                                                        <div class="mt-2">
+                                                            <span class="badge bg-{{ $p->keterangan == 'hadir' ? 'success' : ($p->keterangan == 'izin' ? 'info' : ($p->keterangan == 'sakit' ? 'warning' : 'secondary')) }}">
+                                                                {{ ucfirst(str_replace('_', ' ', $p->keterangan)) }}
+                                                            </span>
+                                                        </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
@@ -319,6 +500,54 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                 <button type="button" class="btn btn-primary" onclick="simpanKeterangan()">
+                    <i class="fas fa-save me-2"></i>Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Keterangan Manual -->
+<div class="modal fade" id="modalTambahKeterangan" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Keterangan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="manual_user_id">
+                <input type="hidden" id="manual_waktu_sholat">
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    User: <strong id="manual_user_name"></strong><br>
+                    Waktu Sholat: <strong id="manual_waktu_display"></strong>
+                </div>
+                
+                <label class="form-label fw-bold">Pilih Keterangan:</label>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="keterangan_manual" value="izin" id="izin_manual">
+                    <label class="form-check-label" for="izin_manual">
+                        <i class="fas fa-info-circle text-info me-1"></i>Izin
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="keterangan_manual" value="sakit" id="sakit_manual">
+                    <label class="form-check-label" for="sakit_manual">
+                        <i class="fas fa-notes-medical text-warning me-1"></i>Sakit
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="keterangan_manual" value="tanpa_keterangan" id="tanpa_keterangan_manual">
+                    <label class="form-check-label" for="tanpa_keterangan_manual">
+                        <i class="fas fa-times-circle text-secondary me-1"></i>Tanpa Keterangan (Alpa)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="simpanKeteranganManual()">
                     <i class="fas fa-save me-2"></i>Simpan
                 </button>
             </div>
@@ -391,7 +620,6 @@
             if(rfid) {
                 scanPresensi(rfid, waktu, inputElement);
             } else {
-                // ✅ Warning jika RFID kosong
                 $(`#result_${waktu}`).html(`
                     <div class="alert alert-warning alert-shake border-0 shadow-sm">
                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -406,6 +634,20 @@
     $(document).on('keydown', function(e) {
         if ($('.modal').hasClass('show')) return;
         
+        // Ctrl+F untuk search
+        if (e.ctrlKey && e.which === 70) {
+            e.preventDefault();
+            $('#searchUser').focus().select();
+            return;
+        }
+        
+        // ESC untuk clear search
+        if (e.key === 'Escape') {
+            $('#clearSearch').click();
+            return;
+        }
+        
+        // Alt+1-5 untuk focus input waktu sholat
         if (e.altKey && e.which === 49) {
             e.preventDefault();
             $('.scan-input[data-waktu="subuh"]').focus();
@@ -439,7 +681,6 @@
                 waktu_sholat: waktu
             },
             beforeSend: function() {
-                // ✅ Loading indicator
                 $(`#result_${waktu}`).html(`
                     <div class="alert alert-info border-0 shadow-sm loading-indicator">
                         <i class="fas fa-spinner fa-spin me-2"></i>
@@ -450,19 +691,18 @@
             success: function(response) {
                 console.log('✅ Success:', response);
                 
-                // ✅ PRESENSI BERHASIL - NOTIF PERMANEN
                 let alertClass = response.data.presensi.terlambat ? 'alert-warning' : 'alert-success';
                 let iconClass = response.data.presensi.terlambat ? 'fa-exclamation-triangle' : 'fa-check-circle';
                 let soundType = response.data.presensi.terlambat ? 'warning' : 'success';
                 let title = response.data.presensi.terlambat ? '⚠️ Terlambat!' : '✅ Berhasil!';
                 
                 let notifHtml = `
-                    <div class="alert ${alertClass} border-0 shadow-sm alert-slide-in">
+                    <div class="alert ${alertClass} border-0 shadow-sm notif-absensi">
                         <h6 class="alert-heading mb-2">
                             <i class="fas ${iconClass} me-2"></i>${title}
                         </h6>
                         <div class="d-flex align-items-center mb-2">
-                            <div class="rounded-circle bg-white p-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <div class="rounded-circle bg-white p-2 me-2" style="width: 40px; height: 40px; display: flex; align-items-center; justify-content: center;">
                                 <i class="fas fa-user text-primary"></i>
                             </div>
                             <div>
@@ -477,24 +717,16 @@
                     </div>
                 `;
                 
-                // ✅ TAMPILKAN NOTIF PERMANEN (tidak auto-hide)
                 $(`#result_${waktu}`).html(notifHtml);
-                
-                // Play sound
                 playSound(soundType);
-                
-                // Clear input & focus
                 inputElement.val('');
                 setTimeout(() => inputElement.focus(), 100);
-                
-                // Update counter & tabel tanpa reload
                 updateCounter(waktu);
                 updateTable();
             },
             error: function(xhr) {
                 console.log('❌ Error:', xhr.status, xhr.responseJSON);
                 
-                // ❌ ERROR - NOTIF PERMANEN
                 let errorMessage = 'Terjadi kesalahan';
                 let userName = '';
                 let userRfid = rfid;
@@ -531,7 +763,7 @@
                         </h6>
                         ${userName ? `
                         <div class="d-flex align-items-center mb-2">
-                            <div class="rounded-circle bg-white p-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <div class="rounded-circle bg-white p-2 me-2" style="width: 40px; height: 40px; display: flex; align-items-center; justify-content: center;">
                                 <i class="fas fa-user text-warning"></i>
                             </div>
                             <div>
@@ -551,13 +783,8 @@
                     </div>
                 `;
                 
-                // ✅ TAMPILKAN ERROR PERMANEN (tidak auto-hide)
                 $(`#result_${waktu}`).html(notifHtml);
-                
-                // Play sound
                 playSound(soundType);
-                
-                // Clear input & focus
                 inputElement.val('');
                 setTimeout(() => inputElement.focus(), 100);
             }
@@ -565,7 +792,7 @@
     }
 
     // ============================================
-    // 🔄 UPDATE COUNTER (TANPA RELOAD)
+    // 🔄 UPDATE COUNTER
     // ============================================
     function updateCounter(waktu) {
         let currentCount = parseInt($(`#stats_${waktu} strong`).first().text()) || 0;
@@ -582,49 +809,57 @@
     }
 
     // ============================================
-    // 📊 UPDATE TABLE (TANPA RELOAD)
+    // 📊 UPDATE TABLE
     // ============================================
     function updateTable() {
         $.ajax({
             url: '{{ route("presensi.sholat.index") }}',
             method: 'GET',
             success: function(html) {
-                // Update tabel status absensi
-                let newTableBody = $(html).find('.table-bordered tbody').html();
-                $('.table-bordered tbody').html(newTableBody);
+                let newTableBody = $(html).find('#tabelPresensi tbody').html();
+                $('#tabelPresensi tbody').html(newTableBody);
                 
-                // Update tabel detail presensi
-                let newDetailBody = $(html).find('.table-hover tbody').html();
-                $('.table-hover tbody').html(newDetailBody);
+                let newTotalHadir = $(html).find('#total-hadir').text();
+                let newTotalBelum = $(html).find('#total-belum').text();
+                $('#total-hadir').text(newTotalHadir);
+                $('#total-belum').text(newTotalBelum);
             }
         });
     }
 
     // ============================================
-    // 🔄 AUTO RE-FOCUS
+    // 👁️ TOGGLE DETAIL ROW
     // ============================================
-    setInterval(function() {
-        if (!$('input:focus').length && !$('select:focus').length && !$('textarea:focus').length && !$('.modal').hasClass('show')) {
-            if (currentFocusedInput) {
-                currentFocusedInput.focus();
-            }
+    function toggleDetail(userId) {
+        let detailRow = $(`#detail-${userId}`);
+        
+        if (detailRow.is(':visible')) {
+            detailRow.fadeOut(200);
+        } else {
+            $('.detail-row').fadeOut(200);
+            detailRow.fadeIn(200);
         }
-    }, 3000);
+    }
 
     // ============================================
-    // 📝 UPDATE KETERANGAN
+    // ✏️ EDIT KETERANGAN
     // ============================================
-    function updateKeterangan(id) {
-        $('#presensi_id').val(id);
+    function editKeterangan(presensiId, currentKeterangan) {
+        $('#presensi_id').val(presensiId);
+        $('input[name="keterangan"]').prop('checked', false);
+        $(`input[name="keterangan"][value="${currentKeterangan}"]`).prop('checked', true);
         $('#modalKeterangan').modal('show');
     }
 
+    // ============================================
+    // 💾 SIMPAN KETERANGAN
+    // ============================================
     function simpanKeterangan() {
         let presensiId = $('#presensi_id').val();
         let keterangan = $('input[name="keterangan"]:checked').val();
 
         if(!keterangan) {
-            alert('⚠️ Pilih keterangan terlebih dahulu!');
+            showToast('warning', 'Perhatian!', 'Pilih keterangan terlebih dahulu!');
             return;
         }
 
@@ -642,10 +877,7 @@
             success: function(response) {
                 $('#modalKeterangan').modal('hide');
                 updateTable();
-                
-                // Toast notification
                 showToast('success', 'Berhasil!', 'Keterangan berhasil diubah!');
-                
                 saveBtn.prop('disabled', false).html('<i class="fas fa-save me-2"></i>Simpan');
             },
             error: function(xhr) {
@@ -656,10 +888,165 @@
     }
 
     // ============================================
+    // ➕ TAMBAH KETERANGAN MANUAL
+    // ============================================
+    function tambahKeteranganManual(userId, waktuSholat) {
+        let userName = $(`tr[data-user-id="${userId}"] td:nth-child(2) strong`).text();
+        
+        $('#manual_user_id').val(userId);
+        $('#manual_waktu_sholat').val(waktuSholat);
+        $('#manual_user_name').text(userName);
+        $('#manual_waktu_display').text(waktuSholat.charAt(0).toUpperCase() + waktuSholat.slice(1));
+        
+        $('input[name="keterangan_manual"]').prop('checked', false);
+        
+        $('#modalTambahKeterangan').modal('show');
+    }
+
+    // ============================================
+    // 💾 SIMPAN KETERANGAN MANUAL
+    // ============================================
+    function simpanKeteranganManual() {
+        let userId = $('#manual_user_id').val();
+        let waktuSholat = $('#manual_waktu_sholat').val();
+        let keterangan = $('input[name="keterangan_manual"]:checked').val();
+
+        if(!keterangan) {
+            showToast('warning', 'Perhatian!', 'Pilih keterangan terlebih dahulu!');
+            return;
+        }
+
+        let saveBtn = $('button[onclick="simpanKeteranganManual()"]');
+        saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...');
+
+        $.ajax({
+            url: '{{ route("presensi.sholat.store.manual") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                user_id: userId,
+                waktu_sholat: waktuSholat,
+                keterangan: keterangan
+            },
+            success: function(response) {
+                console.log('✅ Keterangan Manual Saved:', response);
+                
+                $('#modalTambahKeterangan').modal('hide');
+                
+                updateCounter(waktuSholat);
+                updateTable();
+                
+                showToast('success', 'Berhasil!', response.message);
+                
+                saveBtn.prop('disabled', false).html('<i class="fas fa-save me-2"></i>Simpan');
+            },
+            error: function(xhr) {
+                console.log('❌ Error:', xhr.responseJSON);
+                
+                showToast('danger', 'Gagal!', xhr.responseJSON?.message || 'Terjadi kesalahan');
+                saveBtn.prop('disabled', false).html('<i class="fas fa-save me-2"></i>Simpan');
+            }
+        });
+    }
+
+    // ============================================
+    // 🔍 SEARCH USER FUNCTIONALITY
+    // ============================================
+    let searchTimeout;
+
+    $('#searchUser').on('input', function() {
+        clearTimeout(searchTimeout);
+        
+        let searchTerm = $(this).val().toLowerCase().trim();
+        
+        searchTimeout = setTimeout(function() {
+            searchUser(searchTerm);
+        }, 300);
+    });
+
+    function searchUser(searchTerm) {
+        let $tbody = $('#tabelPresensi tbody');
+        let $rows = $tbody.find('tr:not(.detail-row)');
+        let foundCount = 0;
+        let firstMatch = null;
+        
+        $rows.removeClass('highlight-row');
+        $('.detail-row').hide();
+        
+        if (searchTerm === '') {
+            $rows.removeClass('hidden-row');
+            $('.detail-row').removeClass('hidden-row');
+            $('#searchResult').html(`Total User: <strong>${$rows.length}</strong>`)
+                .removeClass('bg-success bg-danger').addClass('bg-info');
+            return;
+        }
+        
+        $rows.each(function() {
+            let $row = $(this);
+            let userId = $row.data('user-id');
+            let userName = $row.find('td:nth-child(2) strong').text().toLowerCase();
+            let userRfid = $row.find('td:nth-child(2) small').text().toLowerCase();
+            
+            if (userName.includes(searchTerm) || userRfid.includes(searchTerm)) {
+                $row.removeClass('hidden-row');
+                $row.addClass('highlight-row');
+                $(`#detail-${userId}`).removeClass('hidden-row');
+                
+                foundCount++;
+                
+                if (!firstMatch) {
+                    firstMatch = $row;
+                }
+            } else {
+                $row.addClass('hidden-row');
+                $(`#detail-${userId}`).addClass('hidden-row');
+            }
+        });
+        
+        if (foundCount > 0) {
+            $('#searchResult').html(`
+                <i class="fas fa-check-circle me-1"></i>
+                Ditemukan: <strong>${foundCount}</strong> user
+            `).removeClass('bg-info bg-danger').addClass('bg-success');
+            
+            if (firstMatch) {
+                $('html, body').animate({
+                    scrollTop: firstMatch.offset().top - 150
+                }, 500);
+            }
+        } else {
+            $('#searchResult').html(`
+                <i class="fas fa-times-circle me-1"></i>
+                Tidak ditemukan
+            `).removeClass('bg-info bg-success').addClass('bg-danger');
+        }
+    }
+
+    // ============================================
+    // 🗑️ CLEAR SEARCH
+    // ============================================
+    $('#clearSearch').on('click', function() {
+        $('#searchUser').val('');
+        searchUser('');
+        $('#searchUser').focus();
+    });
+
+    // ============================================
+    // 🔄 AUTO RE-FOCUS
+    // ============================================
+    setInterval(function() {
+        if (!$('input:focus').length && !$('select:focus').length && !$('textarea:focus').length && !$('.modal').hasClass('show')) {
+            if (currentFocusedInput) {
+                currentFocusedInput.focus();
+            }
+        }
+    }, 3000);
+
+    // ============================================
     // 🔔 TOAST NOTIFICATION
     // ============================================
     function showToast(type, title, message) {
-        let bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        let bgClass = type === 'success' ? 'bg-success' : (type === 'warning' ? 'bg-warning' : 'bg-danger');
         let icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
         
         let toast = $(`
@@ -678,12 +1065,5 @@
         $('body').append(toast);
         setTimeout(() => toast.fadeOut('slow', () => toast.remove()), 3000);
     }
-
-    // ============================================
-    // 🔄 AUTO REFRESH TABEL (Opsional)
-    // ============================================
-    // setInterval(function() {
-    //     updateTable();
-    // }, 60000); // Refresh setiap 1 menit
 </script>
 @endsection

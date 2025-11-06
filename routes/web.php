@@ -31,15 +31,14 @@ Route::middleware(['auth'])->group(function () {
     
     // Presensi Sholat
     // Presensi Sholat Routes (gunakan prefix presensi-sholat)
-    Route::prefix('presensi-sholat')->name('presensi.sholat.')->group(function () {
-        Route::get('/', [PresensiSholatController::class, 'index'])->name('index');
-        Route::post('/scan', [PresensiSholatController::class, 'scan'])->name('scan');
-        Route::post('/update-keterangan', [PresensiSholatController::class, 'updateKeterangan'])->name('update');
-        Route::get('/jadwal', [PresensiSholatController::class, 'getJadwal'])->name('jadwal');
-        Route::get('/latest', [PresensiSholatController::class, 'getLatestPresensi'])->name('latest');
-        
-        // Export (opsional)
-        Route::get('/export', [PresensiSholatController::class, 'export'])->name('export');
+Route::prefix('presensi-sholat')->name('presensi.sholat.')->group(function () {
+    Route::get('/', [PresensiSholatController::class, 'index'])->name('index');
+    Route::post('/scan', [PresensiSholatController::class, 'scan'])->name('scan');
+    Route::post('/update', [PresensiSholatController::class, 'update'])->name('update'); // ✅ FIXED
+    Route::post('/store-manual', [PresensiSholatController::class, 'storeManual'])->name('store.manual');
+    Route::get('/jadwal', [PresensiSholatController::class, 'getJadwal'])->name('jadwal');
+    Route::get('/latest', [PresensiSholatController::class, 'getLatestPresensi'])->name('latest');
+    Route::get('/export', [PresensiSholatController::class, 'export'])->name('export');
     });
     
     // Presensi Kustom

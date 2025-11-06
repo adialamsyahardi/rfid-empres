@@ -1,5 +1,5 @@
 <?php
-// Update app/Models/PresensiSholat.php - tambahkan method
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -10,35 +10,61 @@ class PresensiSholat extends Model
     protected $table = 'presensi_sholat';
     
     protected $fillable = [
-        'user_id', 'tanggal', 'waktu_sholat', 'jam_presensi', 
-        'keterangan', 'terlambat', 'menit_terlambat'
+        'user_id',
+        'tanggal',
+        'waktu_sholat',
+        'jam_presensi',
+        'keterangan',
+        'terlambat',
+        'menit_terlambat'
     ];
 
     protected $casts = [
         'tanggal' => 'date',
-        'terlambat' => 'boolean',
+        'terlambat' => 'boolean'
     ];
 
+    // ✅ DEFAULT VALUES
+    protected $attributes = [
+        'keterangan' => 'tanpa_keterangan',
+        'terlambat' => false,
+        'menit_terlambat' => 0
+    ];
+
+    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Hitung keterlambatan sholat
-    public static function hitungKeterlambatan($jamAdzan, $jamScan)
+    // Helper Method
+    public static function hitungKeterlambatan($jamAdzan, $jamPresensi)
     {
-        $pengaturan = PengaturanWaktu::getSholatToleransi();
-        $toleransi = $pengaturan ? $pengaturan->toleransi_keterlambatan : 20;
-
-        $adzan = Carbon::parse($jamAdzan);
-        $batasWaktu = $adzan->copy()->addMinutes($toleransi);
-        $scan = Carbon::parse($jamScan);
-
-        if ($scan->greaterThan($batasWaktu)) {
-            $menit = $scan->diffInMinutes($adzan);
-            return ['terlambat' => true, 'menit' => $menit];
+        $adzan = Carbon::createFromFormat('H:i:s', $jamAdzan);
+        $presensi = Carbon::createFromFormat('H:i:s', $jamPresensi);
+        
+        $selisih = $presensi->diffInMinutes($adzan, false);
+        
+        $toleransi = PengaturanWaktu::getSholatToleransi();
+        $batasToleransi = $toleransi ? $toleransi->toleransi_keterlambatan : 20;
+        
+        if ($selisih < 0) {
+            return [
+                'terlambat' => false,
+                'menit' => 0
+            ];
         }
-
-        return ['terlambat' => false, 'menit' => 0];
+        
+        if ($selisih <= $batasToleransi) {
+            return [
+                'terlambat' => false,
+                'menit' => 0
+            ];
+        }
+        
+        return [
+            'terlambat' => true,
+            'menit' => $selisih
+        ];
     }
 }
