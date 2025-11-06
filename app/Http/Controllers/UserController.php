@@ -159,7 +159,7 @@ public function update(Request $request, User $user)
         'jenis_kelamin' => 'nullable|in:L,P',
         'alamat' => 'nullable|string|max:500',
         'limit_harian' => 'nullable|numeric|min:0|max:1000000',
-        'saldo' => 'nullable|numeric|min:0|max:10000000'
+        // ✅ HAPUS VALIDASI SALDO
     ], [
         'rfid_card.required' => 'RFID Card wajib diisi',
         'rfid_card.unique' => 'RFID Card sudah digunakan user lain',
@@ -171,11 +171,11 @@ public function update(Request $request, User $user)
         'tanggal_lahir.before' => 'Tanggal lahir tidak valid',
         'jenis_kelamin.in' => 'Jenis kelamin harus L atau P',
         'limit_harian.max' => 'Limit harian maksimal Rp 1.000.000',
-        'saldo.max' => 'Saldo maksimal Rp 10.000.000'
+        // ✅ HAPUS MESSAGE SALDO
     ]);
 
     try {
-        // Prepare update data
+        // ✅ Prepare update data (TANPA SALDO)
         $data = [
             'rfid_card' => $request->rfid_card,
             'name' => $request->name,
@@ -186,8 +186,7 @@ public function update(Request $request, User $user)
             'jenis_kelamin' => $request->jenis_kelamin,
             'alamat' => $request->alamat,
             'limit_harian' => $request->limit_harian ?? 10000,
-            'saldo' => $request->saldo ?? 0,
-            // ✅ FIX: Checkbox tidak kirim data kalau unchecked
+            // ✅ HAPUS SALDO DARI DATA UPDATE
             'limit_saldo_aktif' => $request->has('limit_saldo_aktif') ? 1 : 0,
         ];
 
@@ -200,16 +199,25 @@ public function update(Request $request, User $user)
         \Log::info('Updating user', [
             'user_id' => $user->id,
             'old_data' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
                 'tempat_lahir' => $user->tempat_lahir,
+                'limit_harian' => $user->limit_harian,
                 'limit_saldo_aktif' => $user->limit_saldo_aktif,
+                'saldo' => $user->saldo, // ✅ LOG SALDO (TAPI TIDAK DIUBAH)
             ],
             'new_data' => [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role' => $data['role'],
                 'tempat_lahir' => $data['tempat_lahir'],
+                'limit_harian' => $data['limit_harian'],
                 'limit_saldo_aktif' => $data['limit_saldo_aktif'],
             ]
         ]);
 
-        // Update user
+        // ✅ Update user (SALDO TIDAK IKUT DIUPDATE)
         $user->update($data);
 
         // Refresh model to get updated data
@@ -217,10 +225,11 @@ public function update(Request $request, User $user)
 
         return redirect()
             ->route('users.index')
-            ->with('success', "✅ User {$user->name} berhasil diperbarui!");
+            ->with('success', "✅ User {$user->name} berhasil diperbarui! (Saldo tidak berubah: Rp " . number_format($user->saldo, 0, ',', '.') . ")");
 
     } catch (\Exception $e) {
         \Log::error('Error updating user', [
+            'user_id' => $user->id,
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ]);

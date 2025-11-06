@@ -285,6 +285,15 @@
                 Status & Detail Presensi Sholat Hari Ini
             </h5>
             <div>
+                <!-- ✅ TOMBOL EXPORT PDF -->
+                <a href="{{ route('presensi.sholat.export-pdf') }}" 
+                   class="btn btn-danger btn-sm me-2"
+                   target="_blank"
+                   title="Export ke PDF (Ctrl+P)">
+                    <i class="fas fa-file-pdf me-1"></i>
+                    Download Laporan Sholat PDF
+                </a>
+                
                 <span class="badge bg-success">
                     <i class="fas fa-check-circle me-1"></i>
                     Hadir: <strong id="total-hadir">{{ $presensi->count() }}</strong>
@@ -459,6 +468,7 @@
     </div>
 </div>
 
+<!-- MODAL UPDATE KETERANGAN -->
 <div class="modal fade" id="modalKeterangan" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -470,19 +480,27 @@
                 <input type="hidden" id="presensi_id">
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="radio" name="keterangan" value="hadir" id="hadir">
-                    <label class="form-check-label" for="hadir">Hadir</label>
+                    <label class="form-check-label" for="hadir">
+                        <i class="fas fa-check-circle text-success me-1"></i>Hadir
+                    </label>
                 </div>
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="radio" name="keterangan" value="izin" id="izin">
-                    <label class="form-check-label" for="izin">Izin</label>
+                    <label class="form-check-label" for="izin">
+                        <i class="fas fa-info-circle text-info me-1"></i>Izin
+                    </label>
                 </div>
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="radio" name="keterangan" value="sakit" id="sakit">
-                    <label class="form-check-label" for="sakit">Sakit</label>
+                    <label class="form-check-label" for="sakit">
+                        <i class="fas fa-notes-medical text-warning me-1"></i>Sakit
+                    </label>
                 </div>
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="keterangan" value="tanpa_keterangan" id="tanpa_keterangan">
-                    <label class="form-check-label" for="tanpa_keterangan">Tanpa Keterangan</label>
+                    <label class="form-check-label" for="tanpa_keterangan">
+                        <i class="fas fa-times-circle text-secondary me-1"></i>Tanpa Keterangan
+                    </label>
                 </div>
             </div>
             <div class="modal-footer">
@@ -495,6 +513,7 @@
     </div>
 </div>
 
+<!-- MODAL TAMBAH KETERANGAN MANUAL -->
 <div class="modal fade" id="modalTambahKeterangan" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -546,6 +565,7 @@
 @section('scripts')
 <script>
 let currentFocusedInput = null;
+let userIsInteracting = false; // ✅ DETEKSI INTERAKSI USER
 
 function playSound(type) {
     try {
@@ -583,6 +603,16 @@ $(document).ready(function() {
     currentFocusedInput = $('.scan-input').first();
 });
 
+// ✅ DETEKSI INTERAKSI USER (SCROLL, CLICK, KETIK)
+$(document).on('scroll click keydown', function() {
+    userIsInteracting = true;
+    clearTimeout(window.interactionTimeout);
+    
+    window.interactionTimeout = setTimeout(function() {
+        userIsInteracting = false;
+    }, 2000); // 2 detik setelah interaksi terakhir
+});
+
 $('.scan-input').on('focus', function() {
     currentFocusedInput = $(this);
 });
@@ -608,20 +638,31 @@ $('.scan-input').on('keypress', function(e) {
     }
 });
 
+// ✅ KEYBOARD SHORTCUTS
 $(document).on('keydown', function(e) {
     if ($('.modal').hasClass('show')) return;
     
+    // Ctrl+F = Search
     if (e.ctrlKey && e.which === 70) {
         e.preventDefault();
         $('#searchUser').focus().select();
         return;
     }
     
+    // Ctrl+P = Export PDF
+    if (e.ctrlKey && e.which === 80) {
+        e.preventDefault();
+        window.open('{{ route("presensi.sholat.export-pdf") }}', '_blank');
+        return;
+    }
+    
+    // ESC = Clear Search
     if (e.key === 'Escape') {
         $('#clearSearch').click();
         return;
     }
     
+    // Alt+1 s/d Alt+5 = Focus ke waktu sholat
     if (e.altKey && e.which === 49) {
         e.preventDefault();
         $('.scan-input[data-waktu="subuh"]').focus();
@@ -662,31 +703,23 @@ function scanPresensi(rfid, waktu, inputElement) {
         success: function(response) {
             console.log('✅ Success Response:', response);
             
-            // ✅ AMBIL DATA KETERLAMBATAN
             let keterlambatan = response.data.keterlambatan || {};
             let status = keterlambatan.status || 'tepat_waktu';
-            let alertType = response.alert_type || 'success'; // dari backend
+            let alertType = response.alert_type || 'success';
             
-            console.log('📊 Status:', status);
-            console.log('🎨 Alert Type:', alertType);
-            
-            // ✅ TENTUKAN STYLE BERDASARKAN ALERT_TYPE DARI BACKEND
             let alertClass, iconClass, soundType, title;
             
             if (alertType === 'danger') {
-                // TERLAMBAT
                 alertClass = 'alert-danger';
                 iconClass = 'fa-exclamation-triangle';
                 soundType = 'error';
                 title = '⚠️ Terlambat!';
             } else if (alertType === 'info') {
-                // TERLALU AWAL
                 alertClass = 'alert-info';
                 iconClass = 'fa-info-circle';
                 soundType = 'success';
                 title = '⏰ Terlalu Awal!';
             } else {
-                // TEPAT WAKTU (success)
                 alertClass = 'alert-success';
                 iconClass = 'fa-check-circle';
                 soundType = 'success';
@@ -717,7 +750,7 @@ function scanPresensi(rfid, waktu, inputElement) {
             $(`#result_${waktu}`).html(notifHtml);
             playSound(soundType);
             inputElement.val('');
-            setTimeout(() => inputElement.focus(), 100);
+            setTimeout(() => inputElement.focus({ preventScroll: true }), 100);
             updateCounter(waktu);
             updateTable();
         },
@@ -783,7 +816,7 @@ function scanPresensi(rfid, waktu, inputElement) {
             $(`#result_${waktu}`).html(notifHtml);
             playSound(soundType);
             inputElement.val('');
-            setTimeout(() => inputElement.focus(), 100);
+            setTimeout(() => inputElement.focus({ preventScroll: true }), 100);
         }
     });
 }
@@ -819,6 +852,8 @@ function updateTable() {
 }
 
 function toggleDetail(userId) {
+    userIsInteracting = true; // ✅ TANDAI USER SEDANG INTERAKSI
+    
     let detailRow = $(`#detail-${userId}`);
     
     if (detailRow.is(':visible')) {
@@ -830,6 +865,8 @@ function toggleDetail(userId) {
 }
 
 function editKeterangan(presensiId, currentKeterangan) {
+    userIsInteracting = true; // ✅ TANDAI USER SEDANG INTERAKSI
+    
     $('#presensi_id').val(presensiId);
     $('input[name="keterangan"]').prop('checked', false);
     $(`input[name="keterangan"][value="${currentKeterangan}"]`).prop('checked', true);
@@ -870,6 +907,8 @@ function simpanKeterangan() {
 }
 
 function tambahKeteranganManual(userId, waktuSholat) {
+    userIsInteracting = true; // ✅ TANDAI USER SEDANG INTERAKSI
+    
     let userName = $(`tr[data-user-id="${userId}"] td:nth-child(2) strong`).text();
     
     $('#manual_user_id').val(userId);
@@ -925,6 +964,7 @@ function simpanKeteranganManual() {
     });
 }
 
+// ✅ SEARCH FUNCTION
 let searchTimeout;
 
 $('#searchUser').on('input', function() {
@@ -1001,14 +1041,34 @@ $('#clearSearch').on('click', function() {
     $('#searchUser').focus();
 });
 
+// ✅ AUTO-FOCUS YANG TIDAK MENGGANGGU SCROLL (FIXED!)
 setInterval(function() {
-    if (!$('input:focus').length && !$('select:focus').length && !$('textarea:focus').length && !$('.modal').hasClass('show')) {
-        if (currentFocusedInput) {
-            currentFocusedInput.focus();
-        }
+    // Jangan focus jika:
+    // 1. Ada input yang sedang fokus
+    // 2. Ada modal terbuka
+    // 3. User sedang berinteraksi (scroll/click/ketik)
+    // 4. Detail row terbuka
+    if ($('input:focus').length || 
+        $('select:focus').length || 
+        $('textarea:focus').length || 
+        $('.modal').hasClass('show') ||
+        userIsInteracting ||
+        $('.detail-row:visible').length > 0) {
+        return;
+    }
+    
+    // Hanya focus jika scroll di posisi atas (dalam 200px dari top)
+    if ($(window).scrollTop() > 200) {
+        return;
+    }
+    
+    // Focus tanpa scroll
+    if (currentFocusedInput) {
+        currentFocusedInput.focus({ preventScroll: true });
     }
 }, 3000);
 
+// ✅ TOAST NOTIFICATION
 function showToast(type, title, message) {
     let bgClass = type === 'success' ? 'bg-success' : (type === 'warning' ? 'bg-warning' : 'bg-danger');
     let icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';

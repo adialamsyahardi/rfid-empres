@@ -362,7 +362,7 @@
         <span><i class="fas fa-utensils me-2"></i> E-Kantin</span>
         <i class="fas fa-chevron-down menu-toggle-icon" id="kantinIcon"></i>
     </a>
-    <div class="submenu" id="kantinMenu" style="display: {{ request()->is('kantin/*') ? 'block' : 'none' }};">
+    <div class="submenu" id="kantinMenu" style="display: {{ request()->is('kantin/*') || request()->is('products/*') ? 'block' : 'none' }};">
         <a class="nav-link {{ request()->routeIs('kantin.cek-saldo') ? 'active' : '' }}" 
            href="{{ route('kantin.cek-saldo') }}">
             <span><i class="fas fa-wallet me-2"></i> Cek Saldo</span>
@@ -386,10 +386,22 @@
     @if(auth()->user()->role === 'admin')
     <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 10px;">
     
-    <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" 
-       href="{{ route('users.index') }}">
+    <!-- ✅ PERBAIKAN: Kelola User jadi Submenu -->
+    <a class="nav-link" href="#" onclick="toggleMenu('usersMenu'); return false;">
         <span><i class="fas fa-users me-2"></i> Kelola User</span>
+        <i class="fas fa-chevron-down menu-toggle-icon" id="usersIcon"></i>
     </a>
+    <div class="submenu" id="usersMenu" style="display: {{ request()->is('users/*') ? 'block' : 'none' }};">
+        <a class="nav-link {{ request()->routeIs('users.index') ? 'active' : '' }}" 
+           href="{{ route('users.index') }}">
+            <span><i class="fas fa-list me-2"></i> Daftar User</span>
+        </a>
+        <a class="nav-link {{ request()->routeIs('users.create') ? 'active' : '' }}" 
+           href="{{ route('users.create') }}">
+            <span><i class="fas fa-user-plus me-2"></i> Tambah User</span>
+        </a>
+    </div>
+
     <a class="nav-link {{ request()->routeIs('jadwal-sholat.*') ? 'active' : '' }}" 
        href="{{ route('jadwal-sholat.index') }}">
         <span><i class="fas fa-calendar-alt me-2"></i> Jadwal Sholat</span>
@@ -437,105 +449,107 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        // CSRF Token Setup
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
+<script>
+    // CSRF Token Setup
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
 
-        // Toggle Sidebar
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            const toggleBtn = document.getElementById('sidebarToggle');
-            
-            sidebar.classList.toggle('hidden');
-            sidebar.classList.toggle('visible');
-            mainContent.classList.toggle('expanded');
-            toggleBtn.classList.toggle('sidebar-open');
+    // Toggle Sidebar
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        
+        sidebar.classList.toggle('hidden');
+        sidebar.classList.toggle('visible');
+        mainContent.classList.toggle('expanded');
+        toggleBtn.classList.toggle('sidebar-open');
 
-            // Save state to localStorage
-            const isOpen = !sidebar.classList.contains('hidden');
-            localStorage.setItem('sidebarOpen', isOpen);
+        // Save state to localStorage
+        const isOpen = !sidebar.classList.contains('hidden');
+        localStorage.setItem('sidebarOpen', isOpen);
+    }
+
+    // Toggle Submenu
+    function toggleMenu(menuId) {
+        const menu = document.getElementById(menuId);
+        const icon = document.getElementById(menuId.replace('Menu', 'Icon'));
+        
+        if (menu.style.display === 'none' || menu.style.display === '') {
+            menu.style.display = 'block';
+            if (icon) icon.classList.add('rotated');
+        } else {
+            menu.style.display = 'none';
+            if (icon) icon.classList.remove('rotated');
         }
 
-        // Toggle Submenu
-        function toggleMenu(menuId) {
-            const menu = document.getElementById(menuId);
-            const icon = document.getElementById(menuId.replace('Menu', 'Icon'));
-            
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                menu.style.display = 'block';
-                if (icon) icon.classList.add('rotated');
-            } else {
-                menu.style.display = 'none';
-                if (icon) icon.classList.remove('rotated');
-            }
+        // Save submenu state
+        localStorage.setItem(menuId, menu.style.display);
+    }
 
-            // Save submenu state
-            localStorage.setItem(menuId, menu.style.display);
+    // Load sidebar state on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        
+        // Load sidebar state
+        const sidebarOpen = localStorage.getItem('sidebarOpen');
+        if (sidebarOpen === 'false') {
+            sidebar.classList.add('hidden');
+            mainContent.classList.add('expanded');
+        } else {
+            toggleBtn.classList.add('sidebar-open');
+            sidebar.classList.add('visible');
         }
 
-        // Load sidebar state on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            const toggleBtn = document.getElementById('sidebarToggle');
-            
-            // Load sidebar state
-            const sidebarOpen = localStorage.getItem('sidebarOpen');
-            if (sidebarOpen === 'false') {
-                sidebar.classList.add('hidden');
-                mainContent.classList.add('expanded');
-            } else {
-                toggleBtn.classList.add('sidebar-open');
-                sidebar.classList.add('visible');
-            }
-
-            // Load submenu states
-            ['presensiMenu', 'kantinMenu'].forEach(menuId => {
-                const state = localStorage.getItem(menuId);
-                if (state) {
-                    const menu = document.getElementById(menuId);
-                    const icon = document.getElementById(menuId.replace('Menu', 'Icon'));
+        // ✅ Load submenu states (TAMBAH usersMenu)
+        ['presensiMenu', 'kantinMenu', 'usersMenu'].forEach(menuId => {
+            const state = localStorage.getItem(menuId);
+            if (state) {
+                const menu = document.getElementById(menuId);
+                const icon = document.getElementById(menuId.replace('Menu', 'Icon'));
+                if (menu) {
                     menu.style.display = state;
                     if (state === 'block' && icon) {
                         icon.classList.add('rotated');
                     }
                 }
-            });
-
-            // Auto-hide alerts after 5 seconds
-            setTimeout(() => {
-                $('.alert').fadeOut('slow');
-            }, 5000);
-
-            // Rotate icons for initially open submenus
-            document.querySelectorAll('.submenu').forEach(submenu => {
-                if (submenu.style.display === 'block') {
-                    const menuId = submenu.id;
-                    const icon = document.getElementById(menuId.replace('Menu', 'Icon'));
-                    if (icon) icon.classList.add('rotated');
-                }
-            });
+            }
         });
 
-        // Auto-close sidebar on mobile when clicking a link
-        if (window.innerWidth <= 768) {
-            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    // Don't close if it's a submenu toggle
-                    if (this.getAttribute('href') === '#') return;
-                    
-                    setTimeout(() => {
-                        toggleSidebar();
-                    }, 300);
-                });
+        // Auto-hide alerts after 5 seconds
+        setTimeout(() => {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+
+        // Rotate icons for initially open submenus
+        document.querySelectorAll('.submenu').forEach(submenu => {
+            if (submenu.style.display === 'block') {
+                const menuId = submenu.id;
+                const icon = document.getElementById(menuId.replace('Menu', 'Icon'));
+                if (icon) icon.classList.add('rotated');
+            }
+        });
+    });
+
+    // Auto-close sidebar on mobile when clicking a link
+    if (window.innerWidth <= 768) {
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Don't close if it's a submenu toggle
+                if (this.getAttribute('href') === '#') return;
+                
+                setTimeout(() => {
+                    toggleSidebar();
+                }, 300);
             });
-        }
-    </script>
+        });
+    }
+</script>
     @yield('scripts')
 </body>
 </html>
