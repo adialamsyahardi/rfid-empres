@@ -222,9 +222,6 @@
                             </td>
                             <td>
                                 {{ $p->jam_masuk ?? '-' }}
-                                @if($p->terlambat_masuk && $p->menit_terlambat_masuk)
-                                    <br><small class="text-danger"><i class="fas fa-exclamation-circle"></i> +{{ $p->menit_terlambat_masuk }} menit</small>
-                                @endif
                             </td>
                             <td>
                                 @if($p->jam_masuk)

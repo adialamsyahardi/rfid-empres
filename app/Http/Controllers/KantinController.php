@@ -44,8 +44,39 @@ class KantinController extends Controller
 
     public function topup()
     {
-        $users = User::where('role', 'user')->orderBy('name')->get();
-        return view('kantin.topup', compact('users'));
+        // ✅ TIDAK PERLU $users lagi karena pakai scan RFID
+        return view('kantin.topup');
+    }
+
+    // ✅ METHOD BARU: Cari user by RFID untuk topup
+    public function cariUserTopup(Request $request)
+    {
+        $request->validate([
+            'rfid_card' => 'required|string',
+        ]);
+
+        $user = User::where('rfid_card', $request->rfid_card)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kartu RFID tidak terdaftar dalam sistem!'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User ditemukan!',
+            'data' => [
+                'user' => $user,
+                'id' => $user->id,
+                'name' => $user->name,
+                'rfid_card' => $user->rfid_card,
+                'saldo' => $user->saldo,
+                'limit_aktif' => $user->limit_saldo_aktif,
+                'limit_harian' => $user->limit_harian
+            ]
+        ]);
     }
 
     public function prosesTopup(Request $request)
@@ -77,7 +108,12 @@ class KantinController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Top up berhasil!',
-                'saldo_baru' => $user->saldo
+                'data' => [
+                    'nama' => $user->name,
+                    'saldo_sebelum' => $saldoSebelum,
+                    'saldo_baru' => $user->saldo,
+                    'jumlah_topup' => $request->jumlah
+                ]
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -88,6 +124,8 @@ class KantinController extends Controller
         }
     }
 
+    // ... method lainnya tetap sama ...
+    
     public function bayar()
     {
         return view('kantin.bayar');
@@ -191,45 +229,44 @@ class KantinController extends Controller
         return view('kantin.riwayat', compact('transaksi'));
     }
 
-public function toggleLimit(Request $request)
-{
-    try {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'status' => 'required|in:0,1,true,false' // ✅ Terima string/int
-        ]);
+    public function toggleLimit(Request $request)
+    {
+        try {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'status' => 'required|in:0,1,true,false'
+            ]);
 
-        $user = User::findOrFail($request->user_id);
-        
-        // Convert to boolean
-        $status = filter_var($request->status, FILTER_VALIDATE_BOOLEAN);
-        $user->limit_saldo_aktif = $status;
-        $user->save();
+            $user = User::findOrFail($request->user_id);
+            
+            $status = filter_var($request->status, FILTER_VALIDATE_BOOLEAN);
+            $user->limit_saldo_aktif = $status;
+            $user->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => $status 
-                ? '✅ Limit saldo berhasil diaktifkan!' 
-                : '✅ Limit saldo berhasil dinonaktifkan!'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => $status 
+                    ? '✅ Limit saldo berhasil diaktifkan!' 
+                    : '✅ Limit saldo berhasil dinonaktifkan!'
+            ]);
 
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Data tidak valid: ' . $e->getMessage()
-        ], 422);
-        
-    } catch (\Exception $e) {
-        \Log::error('Toggle limit error', [
-            'error' => $e->getMessage(),
-            'user_id' => $request->user_id,
-            'status' => $request->status
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal mengubah status limit'
-        ], 500);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid: ' . $e->getMessage()
+            ], 422);
+            
+        } catch (\Exception $e) {
+            \Log::error('Toggle limit error', [
+                'error' => $e->getMessage(),
+                'user_id' => $request->user_id,
+                'status' => $request->status
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status limit'
+            ], 500);
+        }
     }
-}
 }

@@ -62,17 +62,21 @@ Route::middleware(['auth'])->group(function () {
         });
     });
     
-    // E-Kantin
-        Route::prefix('kantin')->name('kantin.')->group(function () {
-        Route::get('/cek-saldo', [KantinController::class, 'cekSaldo'])->name('cek-saldo');
-        Route::post('/scan-saldo', [KantinController::class, 'scanSaldo'])->name('scan-saldo');
-        Route::get('/topup', [KantinController::class, 'topup'])->name('topup');
-        Route::post('/proses-topup', [KantinController::class, 'prosesTopup'])->name('proses-topup');
-        Route::get('/bayar', [KantinController::class, 'bayar'])->name('bayar');
-        Route::post('/proses-bayar', [KantinController::class, 'prosesBayar'])->name('proses-bayar');
-        Route::get('/riwayat', [KantinController::class, 'riwayat'])->name('riwayat');
-        Route::post('/toggle-limit', [KantinController::class, 'toggleLimit'])->name('toggle-limit');
-    });
+// E-Kantin
+Route::prefix('kantin')->name('kantin.')->group(function () {
+    Route::get('/cek-saldo', [KantinController::class, 'cekSaldo'])->name('cek-saldo');
+    Route::post('/scan-saldo', [KantinController::class, 'scanSaldo'])->name('scan-saldo');
+    
+    // ✅ TOPUP dengan SCAN RFID
+    Route::get('/topup', [KantinController::class, 'topup'])->name('topup');
+    Route::post('/cari-user-topup', [KantinController::class, 'cariUserTopup'])->name('cari-user-topup'); // 🆕 ROUTE BARU
+    Route::post('/proses-topup', [KantinController::class, 'prosesTopup'])->name('proses-topup');
+    
+    Route::get('/bayar', [KantinController::class, 'bayar'])->name('bayar');
+    Route::post('/proses-bayar', [KantinController::class, 'prosesBayar'])->name('proses-bayar');
+    Route::get('/riwayat', [KantinController::class, 'riwayat'])->name('riwayat');
+    Route::post('/toggle-limit', [KantinController::class, 'toggleLimit'])->name('toggle-limit');
+});
     
     // User Management (Admin)
         Route::middleware(['admin'])->prefix('users')->name('users.')->group(function () {

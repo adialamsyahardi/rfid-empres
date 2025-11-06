@@ -12,30 +12,40 @@
     .user-sudah-absen { background-color: #d4edda !important; }
     .user-belum-absen { background-color: #f8d7da !important; }
     
-    /* Animasi notifikasi */
-    .alert-sm {
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
+    /* ✅ Animasi notifikasi masuk */
+    @keyframes slideInRight {
         from {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateX(20px);
         }
         to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(0);
         }
     }
     
-    /* Pulse loading */
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
     }
     
-    .alert-info.alert-sm {
-        animation: pulse 1s ease-in-out infinite;
+    /* ✅ Notifikasi dengan animasi */
+    .alert-slide-in {
+        animation: slideInRight 0.3s ease-out;
+    }
+    
+    .alert-shake {
+        animation: shake 0.5s ease-out;
+    }
+    
+    /* ✅ Banner permanen - tidak hilang */
+    .banner-permanen {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     
     /* Highlight input aktif */
@@ -45,27 +55,14 @@
         transition: all 0.3s ease;
     }
     
-    /* Loading overlay */
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        display: none;
+    /* ✅ Pulse loading yang smooth */
+    @keyframes pulseLoading {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
     }
     
-    .loading-spinner {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    .loading-indicator {
+        animation: pulseLoading 1s ease-in-out infinite;
     }
 </style>
 @endsection
@@ -74,10 +71,10 @@
 <div class="container-fluid">
     <h2 class="mb-4">Presensi Sholat</h2>
     
-    <!-- Card Jadwal Sholat dengan Hari & Tanggal -->
+    <!-- ✅ BANNER PERMANEN - Jadwal Sholat dengan Hari & Tanggal -->
     <div class="row">
         <div class="col-md-12">
-            <div class="card mb-4">
+            <div class="card mb-4 banner-permanen">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Jadwal Sholat Hari Ini</h5>
                 </div>
@@ -111,9 +108,11 @@
                             <h4>{{ $jadwal->isya }}</h4>
                         </div>
                     </div>
-                    <div class="alert alert-info mt-3 mb-0">
+                    
+                    {{-- ✅ BANNER BATAS PRESENSI - PERMANEN --}}
+                    <div class="alert alert-info mt-3 mb-0" style="border-left: 5px solid #0dcaf0;">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Batas Presensi :</strong> {{ $toleransi ? $toleransi->toleransi_keterlambatan : 20 }} menit setelah adzan
+                        <strong>Batas Presensi:</strong> {{ $toleransi ? $toleransi->toleransi_keterlambatan : 20 }} menit setelah adzan
                     </div>
                     @else
                     <div class="alert alert-warning">
@@ -134,7 +133,7 @@
             $colorClass = 'waktu-' . $waktu;
         @endphp
         <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-header {{ $colorClass }} text-white">
                     <h6 class="mb-0">
                         <i class="fas fa-mosque me-2"></i>
@@ -142,33 +141,35 @@
                     </h6>
                 </div>
                 <div class="card-body">
-    <div class="mb-2" id="stats_{{ $waktu }}">
-        <small class="text-muted">
-            <i class="fas fa-check-circle text-success"></i> Sudah: <strong>{{ count($sudahAbsen) }}</strong> | 
-            <i class="fas fa-times-circle text-danger"></i> Belum: <strong>{{ \App\Models\User::where('role', 'user')->count() - count($sudahAbsen) }}</strong>
-        </small>
-    </div>
-    <input type="text" 
-           class="form-control scan-input" 
-           data-waktu="{{ $waktu }}" 
-           placeholder="Scan kartu RFID..."
-           autocomplete="off">
-    <div id="result_{{ $waktu }}" class="mt-2"></div>
-</div>
+                    <div class="mb-2" id="stats_{{ $waktu }}">
+                        <small class="text-muted">
+                            <i class="fas fa-check-circle text-success"></i> Sudah: <strong>{{ count($sudahAbsen) }}</strong> | 
+                            <i class="fas fa-times-circle text-danger"></i> Belum: <strong>{{ \App\Models\User::where('role', 'user')->count() - count($sudahAbsen) }}</strong>
+                        </small>
+                    </div>
+                    <input type="text" 
+                           class="form-control scan-input" 
+                           data-waktu="{{ $waktu }}" 
+                           placeholder="Scan kartu RFID..."
+                           autocomplete="off">
+                    
+                    {{-- ✅ NOTIFIKASI PERMANEN - Tidak hilang sampai ditimpa --}}
+                    <div id="result_{{ $waktu }}" class="mt-2"></div>
+                </div>
             </div>
         </div>
         @endforeach
     </div>
 
     <!-- Tabel Status Absensi Semua User -->
-    <div class="card mt-4">
+    <div class="card mt-4 shadow-sm">
         <div class="card-header bg-white">
             <h5 class="mb-0"><i class="fas fa-users me-2"></i>Status Absensi Semua User Hari Ini</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-sm table-bordered">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
                             <th>No</th>
                             <th>Nama</th>
@@ -222,14 +223,14 @@
     </div>
 
     <!-- Tabel Detail Presensi Sholat -->
-    <div class="card mt-4">
+    <div class="card mt-4 shadow-sm">
         <div class="card-header bg-white">
             <h5 class="mb-0"><i class="fas fa-list me-2"></i>Detail Presensi Sholat Hari Ini</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
                             <th>No</th>
                             <th>Nama</th>
@@ -278,7 +279,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center">Belum ada presensi sholat hari ini</td>
+                            <td colspan="8" class="text-center text-muted">Belum ada presensi sholat hari ini</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -317,7 +318,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="simpanKeterangan()">Simpan</button>
+                <button type="button" class="btn btn-primary" onclick="simpanKeterangan()">
+                    <i class="fas fa-save me-2"></i>Simpan
+                </button>
             </div>
         </div>
     </div>
@@ -365,6 +368,7 @@
     // 🚀 PAGE LOAD
     // ============================================
     $(document).ready(function() {
+        console.log('✅ Page Loaded!');
         $('.scan-input').first().focus();
         currentFocusedInput = $('.scan-input').first();
     });
@@ -386,6 +390,14 @@
             
             if(rfid) {
                 scanPresensi(rfid, waktu, inputElement);
+            } else {
+                // ✅ Warning jika RFID kosong
+                $(`#result_${waktu}`).html(`
+                    <div class="alert alert-warning alert-shake border-0 shadow-sm">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Perhatian!</strong> Silakan scan kartu RFID terlebih dahulu!
+                    </div>
+                `);
             }
         }
     });
@@ -416,6 +428,8 @@
     // 📡 SCAN PRESENSI
     // ============================================
     function scanPresensi(rfid, waktu, inputElement) {
+        console.log('🔍 Scanning:', rfid, 'Waktu:', waktu);
+        
         $.ajax({
             url: '{{ route("presensi.sholat.scan") }}',
             method: 'POST',
@@ -425,92 +439,127 @@
                 waktu_sholat: waktu
             },
             beforeSend: function() {
+                // ✅ Loading indicator
                 $(`#result_${waktu}`).html(`
-                    <div class="alert alert-info alert-sm">
+                    <div class="alert alert-info border-0 shadow-sm loading-indicator">
                         <i class="fas fa-spinner fa-spin me-2"></i>
-                        Memproses...
+                        <strong>Memproses...</strong>
                     </div>
                 `);
             },
             success: function(response) {
-                // ✅ PRESENSI BERHASIL
+                console.log('✅ Success:', response);
+                
+                // ✅ PRESENSI BERHASIL - NOTIF PERMANEN
                 let alertClass = response.data.presensi.terlambat ? 'alert-warning' : 'alert-success';
+                let iconClass = response.data.presensi.terlambat ? 'fa-exclamation-triangle' : 'fa-check-circle';
                 let soundType = response.data.presensi.terlambat ? 'warning' : 'success';
+                let title = response.data.presensi.terlambat ? '⚠️ Terlambat!' : '✅ Berhasil!';
                 
                 let notifHtml = `
-                    <div class="alert ${alertClass} alert-sm">
-                        <i class="fas fa-check-circle me-2"></i>
-                        <strong>${response.data.user.name}</strong><br>
-                        ${response.message}
+                    <div class="alert ${alertClass} border-0 shadow-sm alert-slide-in">
+                        <h6 class="alert-heading mb-2">
+                            <i class="fas ${iconClass} me-2"></i>${title}
+                        </h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded-circle bg-white p-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user text-primary"></i>
+                            </div>
+                            <div>
+                                <strong>${response.data.user.name}</strong><br>
+                                <small class="text-muted">${response.data.user.rfid_card}</small>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <p class="mb-0 small">
+                            <i class="fas fa-info-circle me-1"></i>${response.message}
+                        </p>
                     </div>
                 `;
                 
+                // ✅ TAMPILKAN NOTIF PERMANEN (tidak auto-hide)
                 $(`#result_${waktu}`).html(notifHtml);
                 
-                // Play beep sound
+                // Play sound
                 playSound(soundType);
                 
                 // Clear input & focus
                 inputElement.val('');
                 setTimeout(() => inputElement.focus(), 100);
                 
-                // Update counter tanpa reload
+                // Update counter & tabel tanpa reload
                 updateCounter(waktu);
-                updateTable(response.data);
-                
-                // Auto clear notifikasi setelah 5 detik
-                setTimeout(() => {
-                    $(`#result_${waktu}`).fadeOut('slow', function() {
-                        $(this).html('').show();
-                    });
-                }, 5000);
+                updateTable();
             },
             error: function(xhr) {
-                // ❌ ERROR
+                console.log('❌ Error:', xhr.status, xhr.responseJSON);
+                
+                // ❌ ERROR - NOTIF PERMANEN
                 let errorMessage = 'Terjadi kesalahan';
                 let userName = '';
+                let userRfid = rfid;
                 
                 if (xhr.responseJSON) {
                     errorMessage = xhr.responseJSON.message || errorMessage;
                     
                     if (xhr.responseJSON.data && xhr.responseJSON.data.user) {
                         userName = xhr.responseJSON.data.user.name;
+                        userRfid = xhr.responseJSON.data.user.rfid_card;
                     }
                 }
                 
                 let alertClass = 'alert-danger';
                 let iconClass = 'fa-exclamation-circle';
                 let soundType = 'error';
+                let title = '❌ Error!';
+                let animClass = 'alert-shake';
                 
                 if (xhr.status === 400) {
                     alertClass = 'alert-warning';
                     iconClass = 'fa-info-circle';
                     soundType = 'warning';
+                    title = '⚠️ Peringatan';
+                } else if (xhr.status === 404) {
+                    title = '🚫 Tidak Ditemukan';
+                    iconClass = 'fa-user-times';
                 }
                 
                 let notifHtml = `
-                    <div class="alert ${alertClass} alert-sm">
-                        <i class="fas ${iconClass} me-2"></i>
-                        ${userName ? '<strong>' + userName + '</strong><br>' : ''}
-                        ${errorMessage}
+                    <div class="alert ${alertClass} border-0 shadow-sm ${animClass}">
+                        <h6 class="alert-heading mb-2">
+                            <i class="fas ${iconClass} me-2"></i>${title}
+                        </h6>
+                        ${userName ? `
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded-circle bg-white p-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user text-warning"></i>
+                            </div>
+                            <div>
+                                <strong>${userName}</strong><br>
+                                <small class="text-muted">${userRfid}</small>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        ` : `
+                        <div class="bg-white text-dark p-2 rounded mb-2">
+                            <strong>RFID: <code class="text-danger">${userRfid}</code></strong>
+                        </div>
+                        `}
+                        <p class="mb-0 small">
+                            <i class="fas fa-info-circle me-1"></i>${errorMessage}
+                        </p>
                     </div>
                 `;
                 
+                // ✅ TAMPILKAN ERROR PERMANEN (tidak auto-hide)
                 $(`#result_${waktu}`).html(notifHtml);
                 
-                // Play beep sound
+                // Play sound
                 playSound(soundType);
                 
                 // Clear input & focus
                 inputElement.val('');
                 setTimeout(() => inputElement.focus(), 100);
-                
-                // Auto clear notifikasi error setelah 5 detik
-                setTimeout(() => {
-                    $(`#result_${waktu}`).fadeOut('slow', function() {
-                        $(this).html('').show();
-                    });
-                }, 5000);
             }
         });
     }
@@ -519,14 +568,15 @@
     // 🔄 UPDATE COUNTER (TANPA RELOAD)
     // ============================================
     function updateCounter(waktu) {
-        // Update counter "Sudah" di card
         let currentCount = parseInt($(`#stats_${waktu} strong`).first().text()) || 0;
+        let currentBelum = parseInt($(`#stats_${waktu} strong`).last().text()) || 0;
         let newCount = currentCount + 1;
+        let newBelum = currentBelum - 1;
         
         $(`#stats_${waktu}`).html(`
             <small class="text-muted">
                 <i class="fas fa-check-circle text-success"></i> Sudah: <strong>${newCount}</strong> | 
-                <i class="fas fa-times-circle text-danger"></i> Belum: <strong>${parseInt($(`#stats_${waktu} strong`).last().text()) - 1}</strong>
+                <i class="fas fa-times-circle text-danger"></i> Belum: <strong>${newBelum}</strong>
             </small>
         `);
     }
@@ -534,13 +584,12 @@
     // ============================================
     // 📊 UPDATE TABLE (TANPA RELOAD)
     // ============================================
-    function updateTable(data) {
-        // Refresh tabel status absensi via AJAX
+    function updateTable() {
         $.ajax({
             url: '{{ route("presensi.sholat.index") }}',
             method: 'GET',
             success: function(html) {
-                // Update hanya bagian tbody tabel
+                // Update tabel status absensi
                 let newTableBody = $(html).find('.table-bordered tbody').html();
                 $('.table-bordered tbody').html(newTableBody);
                 
@@ -575,9 +624,12 @@
         let keterangan = $('input[name="keterangan"]:checked').val();
 
         if(!keterangan) {
-            alert('Pilih keterangan terlebih dahulu!');
+            alert('⚠️ Pilih keterangan terlebih dahulu!');
             return;
         }
+
+        let saveBtn = $('button[onclick="simpanKeterangan()"]');
+        saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...');
 
         $.ajax({
             url: '{{ route("presensi.sholat.update") }}',
@@ -589,30 +641,49 @@
             },
             success: function(response) {
                 $('#modalKeterangan').modal('hide');
+                updateTable();
                 
-                // Update tabel tanpa reload
-                updateTable({});
+                // Toast notification
+                showToast('success', 'Berhasil!', 'Keterangan berhasil diubah!');
                 
-                // Notifikasi
-                alert('Keterangan berhasil diubah!');
+                saveBtn.prop('disabled', false).html('<i class="fas fa-save me-2"></i>Simpan');
             },
             error: function(xhr) {
-                alert('Terjadi kesalahan: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                showToast('danger', 'Gagal!', xhr.responseJSON?.message || 'Terjadi kesalahan');
+                saveBtn.prop('disabled', false).html('<i class="fas fa-save me-2"></i>Simpan');
             }
         });
     }
 
     // ============================================
-    // 🔄 AUTO REFRESH JADWAL & TABEL
+    // 🔔 TOAST NOTIFICATION
     // ============================================
-    setInterval(function() {
-        // Refresh jadwal
-        $.get('{{ route("presensi.sholat.jadwal") }}', function(response) {
-            // Update jadwal jika diperlukan
-        });
+    function showToast(type, title, message) {
+        let bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        let icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
         
-        // Refresh tabel
-        updateTable({});
-    }, 60000); // Refresh setiap 1 menit
+        let toast = $(`
+            <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+                <div class="toast show" role="alert">
+                    <div class="toast-header ${bgClass} text-white">
+                        <i class="fas ${icon} me-2"></i>
+                        <strong class="me-auto">${title}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>
+            </div>
+        `);
+        
+        $('body').append(toast);
+        setTimeout(() => toast.fadeOut('slow', () => toast.remove()), 3000);
+    }
+
+    // ============================================
+    // 🔄 AUTO REFRESH TABEL (Opsional)
+    // ============================================
+    // setInterval(function() {
+    //     updateTable();
+    // }, 60000); // Refresh setiap 1 menit
 </script>
 @endsection
