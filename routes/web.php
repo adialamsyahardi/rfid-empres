@@ -61,14 +61,15 @@ Route::prefix('presensi-sholat')->name('presensi.sholat.')->group(function () {
         });
     });
     
-// E-Kantin
-Route::prefix('kantin')->name('kantin.')->group(function () {
+// E-Kantin (✅ HANYA ADMIN)
+Route::middleware(['admin'])->prefix('kantin')->name('kantin.')->group(function () {
     Route::get('/cek-saldo', [KantinController::class, 'cekSaldo'])->name('cek-saldo');
     Route::post('/scan-saldo', [KantinController::class, 'scanSaldo'])->name('scan-saldo');
     Route::post('/transaksi-user', [KantinController::class, 'getTransaksiUser'])->name('transaksi-user');
+    
     // ✅ TOPUP dengan SCAN RFID
     Route::get('/topup', [KantinController::class, 'topup'])->name('topup');
-    Route::post('/cari-user-topup', [KantinController::class, 'cariUserTopup'])->name('cari-user-topup'); // 🆕 ROUTE BARU
+    Route::post('/cari-user-topup', [KantinController::class, 'cariUserTopup'])->name('cari-user-topup');
     Route::post('/proses-topup', [KantinController::class, 'prosesTopup'])->name('proses-topup');
     
     Route::get('/bayar', [KantinController::class, 'bayar'])->name('bayar');

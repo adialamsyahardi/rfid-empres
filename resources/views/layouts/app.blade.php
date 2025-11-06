@@ -331,78 +331,81 @@
                 {{ ucfirst(auth()->user()->role) }}
             </span>
         </div>
-        <nav class="nav flex-column mt-3">
-            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                <span><i class="fas fa-home me-2"></i> Dashboard</span>
-            </a>
-            
-            <!-- Menu Presensi -->
-            <a class="nav-link" href="#" onclick="toggleMenu('presensiMenu'); return false;">
-                <span><i class="fas fa-clipboard-check me-2"></i> Presensi</span>
-                <i class="fas fa-chevron-down menu-toggle-icon" id="presensiIcon"></i>
-            </a>
-            <div class="submenu" id="presensiMenu" style="display: {{ request()->is('presensi-*') ? 'block' : 'none' }};">
-                <a class="nav-link {{ request()->routeIs('presensi.sekolah.*') ? 'active' : '' }}" 
-                   href="{{ route('presensi.sekolah.index') }}">
-                    <span><i class="fas fa-school me-2"></i> Sekolah</span>
-                </a>
-                <a class="nav-link {{ request()->routeIs('presensi.sholat.*') ? 'active' : '' }}" 
-                   href="{{ route('presensi.sholat.index') }}">
-                    <span><i class="fas fa-mosque me-2"></i> Sholat</span>
-                </a>
-                <a class="nav-link {{ request()->routeIs('presensi.kustom.*') ? 'active' : '' }}" 
-                   href="{{ route('presensi.kustom.index') }}">
-                    <span><i class="fas fa-clock me-2"></i> Kustom</span>
-                </a>
-            </div>
+<nav class="nav flex-column mt-3">
+    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+        <span><i class="fas fa-home me-2"></i> Dashboard</span>
+    </a>
+    
+    <!-- Menu Presensi (SEMUA USER BISA AKSES) -->
+    <a class="nav-link" href="#" onclick="toggleMenu('presensiMenu'); return false;">
+        <span><i class="fas fa-clipboard-check me-2"></i> Presensi</span>
+        <i class="fas fa-chevron-down menu-toggle-icon" id="presensiIcon"></i>
+    </a>
+    <div class="submenu" id="presensiMenu" style="display: {{ request()->is('presensi-*') ? 'block' : 'none' }};">
+        <a class="nav-link {{ request()->routeIs('presensi.sekolah.*') ? 'active' : '' }}" 
+           href="{{ route('presensi.sekolah.index') }}">
+            <span><i class="fas fa-school me-2"></i> Sekolah</span>
+        </a>
+        <a class="nav-link {{ request()->routeIs('presensi.sholat.*') ? 'active' : '' }}" 
+           href="{{ route('presensi.sholat.index') }}">
+            <span><i class="fas fa-mosque me-2"></i> Sholat</span>
+        </a>
+        <a class="nav-link {{ request()->routeIs('presensi.kustom.*') ? 'active' : '' }}" 
+           href="{{ route('presensi.kustom.index') }}">
+            <span><i class="fas fa-clock me-2"></i> Kustom</span>
+        </a>
+    </div>
 
-            <!-- Menu E-Kantin -->
-            <a class="nav-link" href="#" onclick="toggleMenu('kantinMenu'); return false;">
-                <span><i class="fas fa-utensils me-2"></i> E-Kantin</span>
-                <i class="fas fa-chevron-down menu-toggle-icon" id="kantinIcon"></i>
-            </a>
-            <div class="submenu" id="kantinMenu" style="display: {{ request()->is('kantin/*') ? 'block' : 'none' }};">
-                <a class="nav-link {{ request()->routeIs('kantin.cek-saldo') ? 'active' : '' }}" 
-                   href="{{ route('kantin.cek-saldo') }}">
-                    <span><i class="fas fa-wallet me-2"></i> Cek Saldo</span>
-                </a>
-                <a class="nav-link {{ request()->routeIs('kantin.topup') ? 'active' : '' }}" 
-                   href="{{ route('kantin.topup') }}">
-                    <span><i class="fas fa-money-bill-wave me-2"></i> Top Up</span>
-                </a>
-                <a class="nav-link {{ request()->routeIs('kantin.bayar') ? 'active' : '' }}" 
-                   href="{{ route('kantin.bayar') }}">
-                    <span><i class="fas fa-cash-register me-2"></i> Bayar</span>
-                </a>
-                <a class="nav-link {{ request()->routeIs('kantin.riwayat') ? 'active' : '' }}" 
-                   href="{{ route('kantin.riwayat') }}">
-                    <span><i class="fas fa-history me-2"></i> Riwayat</span>
-                </a>
-            </div>
+    <!-- Menu E-Kantin (✅ HANYA ADMIN) -->
+    @if(auth()->user()->role === 'admin')
+    <a class="nav-link" href="#" onclick="toggleMenu('kantinMenu'); return false;">
+        <span><i class="fas fa-utensils me-2"></i> E-Kantin</span>
+        <i class="fas fa-chevron-down menu-toggle-icon" id="kantinIcon"></i>
+    </a>
+    <div class="submenu" id="kantinMenu" style="display: {{ request()->is('kantin/*') ? 'block' : 'none' }};">
+        <a class="nav-link {{ request()->routeIs('kantin.cek-saldo') ? 'active' : '' }}" 
+           href="{{ route('kantin.cek-saldo') }}">
+            <span><i class="fas fa-wallet me-2"></i> Cek Saldo</span>
+        </a>
+        <a class="nav-link {{ request()->routeIs('kantin.topup') ? 'active' : '' }}" 
+           href="{{ route('kantin.topup') }}">
+            <span><i class="fas fa-money-bill-wave me-2"></i> Top Up</span>
+        </a>
+        <a class="nav-link {{ request()->routeIs('kantin.bayar') ? 'active' : '' }}" 
+           href="{{ route('kantin.bayar') }}">
+            <span><i class="fas fa-cash-register me-2"></i> Bayar</span>
+        </a>
+        <a class="nav-link {{ request()->routeIs('kantin.riwayat') ? 'active' : '' }}" 
+           href="{{ route('kantin.riwayat') }}">
+            <span><i class="fas fa-history me-2"></i> Riwayat</span>
+        </a>
+    </div>
+    @endif
 
-            @if(auth()->user()->role === 'admin')
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 10px;">
-            
-            <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" 
-               href="{{ route('users.index') }}">
-                <span><i class="fas fa-users me-2"></i> Kelola User</span>
-            </a>
-            <a class="nav-link {{ request()->routeIs('jadwal-sholat.*') ? 'active' : '' }}" 
-               href="{{ route('jadwal-sholat.index') }}">
-                <span><i class="fas fa-calendar-alt me-2"></i> Jadwal Sholat</span>
-            </a>
-            <a class="nav-link {{ request()->routeIs('pengaturan.waktu.*') ? 'active' : '' }}" 
-               href="{{ route('pengaturan.waktu.index') }}">
-                <span><i class="fas fa-cog me-2"></i> Pengaturan Waktu</span>
-            </a>
-            @endif
+    <!-- Menu Admin (HANYA ADMIN) -->
+    @if(auth()->user()->role === 'admin')
+    <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 10px;">
+    
+    <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" 
+       href="{{ route('users.index') }}">
+        <span><i class="fas fa-users me-2"></i> Kelola User</span>
+    </a>
+    <a class="nav-link {{ request()->routeIs('jadwal-sholat.*') ? 'active' : '' }}" 
+       href="{{ route('jadwal-sholat.index') }}">
+        <span><i class="fas fa-calendar-alt me-2"></i> Jadwal Sholat</span>
+    </a>
+    <a class="nav-link {{ request()->routeIs('pengaturan.waktu.*') ? 'active' : '' }}" 
+       href="{{ route('pengaturan.waktu.index') }}">
+        <span><i class="fas fa-cog me-2"></i> Pengaturan Waktu</span>
+    </a>
+    @endif
 
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 10px;">
+    <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 10px;">
 
-            <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <span><i class="fas fa-sign-out-alt me-2"></i> Logout</span>
-            </a>
-        </nav>
+    <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <span><i class="fas fa-sign-out-alt me-2"></i> Logout</span>
+    </a>
+</nav>
     </div>
 
     <!-- Main Content -->
