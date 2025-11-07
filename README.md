@@ -84,3 +84,7 @@ management for users, jadwal sholat, and presensi settings.
 
 - Admin: `admin@rfid.com` / `admin123`
 - Sample users: see `database/seeders/DatabaseSeeder.php`
+
+## License
+
+This software licensed under the [MIT license](https://opensource.org/licenses/MIT).
