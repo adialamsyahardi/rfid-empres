@@ -31,17 +31,32 @@
         padding: 15px;
         border-radius: 5px;
     }
+    /* ✅ UPDATED: Balance Display (Read-Only) */
     .balance-display {
         background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         color: white;
         padding: 20px;
         border-radius: 10px;
         text-align: center;
+        margin-bottom: 20px;
     }
     .balance-display h3 {
         margin: 0;
         font-size: 2rem;
         font-weight: bold;
+    }
+    .balance-display small {
+        display: block;
+        margin-top: 10px;
+        opacity: 0.9;
+    }
+    /* ✅ NEW: Warning Box untuk Info Saldo */
+    .saldo-info-box {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
     }
 </style>
 @endsection
@@ -74,10 +89,45 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('users.update', $user) }}" id="formUser">
+                    <!-- ✅ INFO BOX: Saldo Read-Only -->
+                    <div class="saldo-info-box">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Informasi Penting:</strong> 
+                        Saldo tidak dapat diedit di halaman ini. 
+                        Untuk mengubah saldo, gunakan menu <strong>E-Kantin → Top Up</strong>.
+                    </div>
+
+                    <!-- ✅ BALANCE DISPLAY (Read-Only) -->
+                    <div class="balance-display">
+                        <p class="mb-1">💰 Saldo Saat Ini</p>
+                        <h3>Rp {{ number_format($user->saldo, 0, ',', '.') }}</h3>
+                        <small>
+                            <i class="fas fa-clock me-1"></i>
+                            Terakhir update: {{ $user->updated_at->format('d M Y H:i') }}
+                        </small>
+                        <small style="display: block; margin-top: 5px;">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Limit Harian: Rp {{ number_format($user->limit_harian, 0, ',', '.') }}
+                            @if($user->limit_saldo_aktif)
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="fas fa-lock"></i> AKTIF
+                                </span>
+                            @else
+                                <span class="badge bg-secondary ms-2">
+                                    <i class="fas fa-unlock"></i> NONAKTIF
+                                </span>
+                            @endif
+                        </small>
+                    </div>
+
+                    <form method="POST" action="{{ route('users.update', $user) }}" id="formUser" autocomplete="off">
                         @csrf
                         @method('PUT')
                         
+                        <!-- ✅ DUMMY INPUT UNTUK TRICK BROWSER AUTOCOMPLETE -->
+                        <input type="text" name="fake_email" style="display:none;" tabindex="-1" autocomplete="email">
+                        <input type="password" name="fake_password" style="display:none;" tabindex="-1" autocomplete="current-password">
+
                         <!-- Info Box -->
                         <div class="info-box mb-4">
                             <i class="fas fa-info-circle me-2"></i>
@@ -117,7 +167,9 @@
                                 <input type="text" 
                                        name="name" 
                                        class="form-control @error('name') is-invalid @enderror" 
-                                       value="{{ old('name', $user->name) }}" 
+                                       value="{{ old('name', $user->name) }}"
+                                       placeholder="Nama lengkap user"
+                                       autocomplete="off"
                                        required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -135,7 +187,11 @@
                                 <input type="email" 
                                        name="email" 
                                        class="form-control @error('email') is-invalid @enderror" 
-                                       value="{{ old('email', $user->email) }}" 
+                                       value="{{ old('email', $user->email) }}"
+                                       placeholder="email@example.com"
+                                       autocomplete="off"
+                                       readonly 
+                                       onfocus="this.removeAttribute('readonly');"
                                        required>
                                 @error('email')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -150,6 +206,9 @@
                                        name="password" 
                                        class="form-control @error('password') is-invalid @enderror"
                                        minlength="6"
+                                       autocomplete="new-password"
+                                       readonly 
+                                       onfocus="this.removeAttribute('readonly');"
                                        placeholder="Kosongkan jika tidak ingin mengubah">
                                 @error('password')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -160,77 +219,30 @@
                             </div>
                         </div>
 
-                        <!-- Role -->
+                        <!-- Role & Jenis Kelamin -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">
                                     <i class="fas fa-user-shield me-1"></i>Role 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select name="role" class="form-select @error('role') is-invalid @enderror" required>
+                                <select name="role" id="role" class="form-select @error('role') is-invalid @enderror" required>
                                     <option value="">-- Pilih Role --</option>
                                     <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>
-                                        👑 Admin
+                                        🔑 Admin (Akses Penuh)
                                     </option>
                                     <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>
-                                        👤 User
+                                        👤 User (Akses Terbatas)
                                     </option>
                                 </select>
                                 @error('role')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <small class="text-muted">
+                                    Admin: Full akses | User: Hanya presensi
+                                </small>
                             </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    <i class="fas fa-money-bill-wave me-1"></i>Limit Harian (Rp)
-                                </label>
-                                <input type="number" 
-                                       name="limit_harian" 
-                                       class="form-control @error('limit_harian') is-invalid @enderror" 
-                                       value="{{ old('limit_harian', $user->limit_harian) }}" 
-                                       min="0" 
-                                       step="1000"
-                                       placeholder="10000">
-                                @error('limit_harian')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <small class="text-muted">Default: Rp 10.000</small>
-                            </div>
-                        </div>
-
-                        <!-- Tempat & Tanggal Lahir -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    <i class="fas fa-map-marker-alt me-1"></i>Tempat Lahir
-                                </label>
-                                <input type="text" 
-                                       name="tempat_lahir" 
-                                       class="form-control @error('tempat_lahir') is-invalid @enderror" 
-                                       value="{{ old('tempat_lahir', $user->tempat_lahir) }}">
-                                @error('tempat_lahir')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    <i class="fas fa-calendar me-1"></i>Tanggal Lahir
-                                </label>
-                                <input type="date" 
-                                       name="tanggal_lahir" 
-                                       class="form-control @error('tanggal_lahir') is-invalid @enderror" 
-                                       value="{{ old('tanggal_lahir', is_string($user->tanggal_lahir) ? $user->tanggal_lahir : ($user->tanggal_lahir?->format('Y-m-d') ?? '')) }}"
-                                       max="{{ date('Y-m-d') }}">
-                                @error('tanggal_lahir')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <!-- Jenis Kelamin & Saldo -->
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">
                                     <i class="fas fa-venus-mars me-1"></i>Jenis Kelamin
@@ -248,36 +260,74 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
 
+                        <!-- Tempat & Tanggal Lahir -->
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">
-                                    <i class="fas fa-wallet me-1"></i>Saldo (Rp)
+                                    <i class="fas fa-map-marker-alt me-1"></i>Tempat Lahir
                                 </label>
-                                <input type="number" 
-                                       name="saldo" 
-                                       class="form-control @error('saldo') is-invalid @enderror" 
-                                       value="{{ old('saldo', $user->saldo) }}" 
-                                       min="0" 
-                                       step="1000">
-                                @error('saldo')
+                                <input type="text" 
+                                       name="tempat_lahir" 
+                                       class="form-control @error('tempat_lahir') is-invalid @enderror" 
+                                       value="{{ old('tempat_lahir', $user->tempat_lahir) }}"
+                                       placeholder="Contoh: Jakarta"
+                                       autocomplete="off">
+                                @error('tempat_lahir')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <small class="text-muted">Saldo saat ini: Rp {{ number_format($user->saldo, 0, ',', '.') }}</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>Tanggal Lahir
+                                </label>
+                                <input type="date" 
+                                       name="tanggal_lahir" 
+                                       class="form-control @error('tanggal_lahir') is-invalid @enderror" 
+                                       value="{{ old('tanggal_lahir', is_string($user->tanggal_lahir) ? $user->tanggal_lahir : ($user->tanggal_lahir?->format('Y-m-d') ?? '')) }}"
+                                       max="{{ date('Y-m-d') }}"
+                                       autocomplete="off">
+                                @error('tanggal_lahir')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
-                        <!-- Alamat -->
-                        <div class="mb-3">
-                            <label class="form-label">
-                                <i class="fas fa-home me-1"></i>Alamat
-                            </label>
-                            <textarea name="alamat" 
-                                      class="form-control @error('alamat') is-invalid @enderror" 
-                                      rows="3"
-                                      placeholder="Alamat lengkap...">{{ old('alamat', $user->alamat) }}</textarea>
-                            @error('alamat')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <!-- Limit Harian & Alamat -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave me-1"></i>Limit Harian (Rp)
+                                </label>
+                                <input type="number" 
+                                       name="limit_harian" 
+                                       class="form-control @error('limit_harian') is-invalid @enderror" 
+                                       value="{{ old('limit_harian', $user->limit_harian) }}" 
+                                       min="0" 
+                                       step="1000"
+                                       placeholder="10000"
+                                       autocomplete="off">
+                                @error('limit_harian')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">Default: Rp 10.000</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-home me-1"></i>Alamat
+                                </label>
+                                <textarea name="alamat" 
+                                          class="form-control @error('alamat') is-invalid @enderror" 
+                                          rows="3"
+                                          placeholder="Alamat lengkap..."
+                                          autocomplete="off">{{ old('alamat', $user->alamat) }}</textarea>
+                                @error('alamat')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
                         <!-- Status Limit Saldo -->
@@ -297,13 +347,6 @@
                             <small class="text-muted ms-5">
                                 Jika diaktifkan, user hanya bisa bertransaksi sesuai limit harian yang ditentukan
                             </small>
-                        </div>
-
-                        <!-- Current Balance Display -->
-                        <div class="balance-display mb-4">
-                            <p class="mb-1">💰 Saldo Terkini</p>
-                            <h3>Rp {{ number_format($user->saldo, 0, ',', '.') }}</h3>
-                            <small>Terakhir update: {{ $user->updated_at->format('d M Y H:i') }}</small>
                         </div>
 
                         <!-- Submit Button -->
@@ -329,6 +372,12 @@ $(document).ready(function() {
     // Auto-focus RFID input when page loads
     $('#rfid_card').focus();
 
+    // ✅ Clear email & password saat page load (force kosongkan)
+    setTimeout(function() {
+        $('input[name="email"]').val('{{ old('email', $user->email) }}');
+        $('input[name="password"]').val('');
+    }, 100);
+
     // Cegah form submit saat Enter ditekan di input RFID
     $('#rfid_card').on('keypress', function(e) {
         if(e.which === 13) {
@@ -339,11 +388,12 @@ $(document).ready(function() {
         }
     });
 
-    // Validasi sebelum submit
+    // ✅ Validasi sebelum submit
     $('#formUser').on('submit', function(e) {
         let rfid = $('#rfid_card').val().trim();
         let name = $('input[name="name"]').val().trim();
         let email = $('input[name="email"]').val().trim();
+        let role = $('#role').val();
         
         if(!rfid || rfid.length < 3) {
             e.preventDefault();
@@ -366,14 +416,28 @@ $(document).ready(function() {
             return false;
         }
 
+        if(!role) {
+            e.preventDefault();
+            alert('⚠️ Role harus dipilih!');
+            $('#role').focus();
+            return false;
+        }
+
+        // ✅ Konfirmasi sebelum submit
+        let roleName = role === 'admin' ? 'Administrator' : 'User Biasa';
+        if(!confirm(`Update user dengan role ${roleName}?`)) {
+            e.preventDefault();
+            return false;
+        }
+
         // Show loading
         $(this).find('button[type="submit"]').prop('disabled', true).html(
             '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...'
         );
     });
 
-    // Format number input (limit harian & saldo)
-    $('input[name="limit_harian"], input[name="saldo"]').on('input', function() {
+    // Format number input (limit harian only)
+    $('input[name="limit_harian"]').on('input', function() {
         let val = $(this).val();
         // Remove non-numeric characters
         val = val.replace(/[^0-9]/g, '');
@@ -387,6 +451,24 @@ $(document).ready(function() {
         } else {
             $(this).removeClass('border-success');
         }
+    });
+
+    // ✅ Highlight role saat dipilih
+    $('#role').on('change', function() {
+        let role = $(this).val();
+        if(role === 'admin') {
+            $(this).removeClass('border-primary').addClass('border-danger');
+        } else if(role === 'user') {
+            $(this).removeClass('border-danger').addClass('border-primary');
+        } else {
+            $(this).removeClass('border-danger border-primary');
+        }
+    });
+
+    // ✅ Auto-capitalize nama
+    $('input[name="name"]').on('blur', function() {
+        let name = $(this).val();
+        $(this).val(name.replace(/\b\w/g, l => l.toUpperCase()));
     });
 });
 </script>

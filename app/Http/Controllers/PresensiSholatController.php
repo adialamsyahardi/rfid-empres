@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Barryvdh\DomPDF\Facade\Pdf as PDF; 
 
 class PresensiSholatController extends Controller
 {
@@ -302,4 +303,65 @@ public function storeManual(Request $request)
         ]
     ]);
 }
+    public function exportPdf()
+    {
+        try {
+            $today = Carbon::today();
+            $hari = Carbon::now()->locale('id')->isoFormat('dddd');
+            $tanggal = Carbon::now()->locale('id')->isoFormat('D MMMM YYYY');
+            
+            $jadwal = JadwalSholat::whereDate('tanggal', $today)->first();
+            $toleransi = PengaturanWaktu::first();
+            $allUsers = User::where('role', 'user')->orderBy('name')->get();
+            
+            $presensi = PresensiSholat::whereDate('tanggal', $today)
+                ->with('user')
+                ->get()
+                ->groupBy('user_id');
+            
+            $totalUser = $allUsers->count();
+            $totalPresensi = PresensiSholat::whereDate('tanggal', $today)->count();
+            $totalBelum = ($totalUser * 5) - $totalPresensi;
+            
+            $waktuSholat = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+            
+            $statistikPerWaktu = [];
+            foreach ($waktuSholat as $waktu) {
+                $hadir = PresensiSholat::whereDate('tanggal', $today)
+                    ->where('waktu_sholat', $waktu)
+                    ->count();
+                $statistikPerWaktu[$waktu] = [
+                    'hadir' => $hadir,
+                    'belum' => $totalUser - $hadir
+                ];
+            }
+            
+            $data = [
+                'hari' => $hari,
+                'tanggal' => $tanggal,
+                'jadwal' => $jadwal,
+                'toleransi' => $toleransi,
+                'allUsers' => $allUsers,
+                'presensi' => $presensi,
+                'waktuSholat' => $waktuSholat,
+                'totalUser' => $totalUser,
+                'totalPresensi' => $totalPresensi,
+                'totalBelum' => $totalBelum,
+                'statistikPerWaktu' => $statistikPerWaktu
+            ];
+            
+            // ✅ UBAH PATH VIEW SESUAI STRUKTUR FOLDER ANDA
+            $pdf = PDF::loadView('presensi.sholat-pdf', $data);
+            
+            $pdf->setPaper('A4', 'landscape');
+            
+            $filename = 'Presensi_Sholat_' . Carbon::now()->format('d-m-Y') . '.pdf';
+            
+            return $pdf->download($filename);
+            
+        } catch (\Exception $e) {
+            \Log::error('PDF Export Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal export PDF: ' . $e->getMessage());
+        }
+    }
 }

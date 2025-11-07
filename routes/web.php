@@ -10,6 +10,7 @@ use App\Http\Controllers\KantinController;
 use App\Http\Controllers\JadwalSholatController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PengaturanWaktuController;
+use App\Http\Controllers\ProductController;
 
 Route::get('/', function () {
     return redirect('/login');
@@ -29,20 +30,22 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/update-keterangan', [PresensiSekolahController::class, 'updateKeterangan'])->name('update');
     });
     
-    // Presensi Sholat
-    // Presensi Sholat Routes (gunakan prefix presensi-sholat)
-Route::prefix('presensi-sholat')->name('presensi.sholat.')->group(function () {
-    Route::get('/', [PresensiSholatController::class, 'index'])->name('index');
-    Route::post('/scan', [PresensiSholatController::class, 'scan'])->name('scan');
-    Route::post('/update', [PresensiSholatController::class, 'update'])->name('update'); // ✅ FIXED
-    Route::post('/store-manual', [PresensiSholatController::class, 'storeManual'])->name('store.manual');
-    Route::get('/jadwal', [PresensiSholatController::class, 'getJadwal'])->name('jadwal');
-    Route::get('/latest', [PresensiSholatController::class, 'getLatestPresensi'])->name('latest');
-    Route::get('/export', [PresensiSholatController::class, 'export'])->name('export');
+    // ✅ PRESENSI SHOLAT (FIXED)
+    Route::prefix('presensi-sholat')->name('presensi.sholat.')->group(function () {
+        Route::get('/', [PresensiSholatController::class, 'index'])->name('index');
+        Route::post('/scan', [PresensiSholatController::class, 'scan'])->name('scan');
+        Route::post('/update', [PresensiSholatController::class, 'update'])->name('update');
+        Route::post('/store-manual', [PresensiSholatController::class, 'storeManual'])->name('store.manual');
+        Route::get('/jadwal', [PresensiSholatController::class, 'getJadwal'])->name('jadwal');
+        Route::get('/latest', [PresensiSholatController::class, 'getLatestPresensi'])->name('latest');
+        Route::get('/export', [PresensiSholatController::class, 'export'])->name('export');
+        
+        // ✅ PERBAIKAN: Hapus prefix ganda, cukup 'export-pdf'
+        Route::get('/export-pdf', [PresensiSholatController::class, 'exportPdf'])->name('export-pdf');
     });
     
     // Presensi Kustom
-            Route::prefix('presensi-kustom')->name('presensi.kustom.')->group(function () {
+    Route::prefix('presensi-kustom')->name('presensi.kustom.')->group(function () {
         Route::get('/', [PresensiKustomController::class, 'index'])->name('index');
         Route::post('/scan', [PresensiKustomController::class, 'scan'])->name('scan');
         Route::post('/update-keterangan', [PresensiKustomController::class, 'updateKeterangan'])->name('update');
@@ -50,7 +53,7 @@ Route::prefix('presensi-sholat')->name('presensi.sholat.')->group(function () {
         // AJAX Routes
         Route::get('/latest', [PresensiKustomController::class, 'getLatestPresensi'])->name('latest');
         Route::get('/stats', [PresensiKustomController::class, 'getStats'])->name('stats');
-        Route::get('/belum-presensi/{jadwalId}', [PresensiKustomController::class, 'getBelumPresensi'])->name('belum.presensi'); // 🆕
+        Route::get('/belum-presensi/{jadwalId}', [PresensiKustomController::class, 'getBelumPresensi'])->name('belum.presensi');
         
         // Kelola Jadwal (Admin only)
         Route::middleware(['admin'])->prefix('jadwal')->name('jadwal.')->group(function () {
@@ -61,25 +64,25 @@ Route::prefix('presensi-sholat')->name('presensi.sholat.')->group(function () {
         });
     });
     
-// E-Kantin (✅ HANYA ADMIN)
-Route::middleware(['admin'])->prefix('kantin')->name('kantin.')->group(function () {
-    Route::get('/cek-saldo', [KantinController::class, 'cekSaldo'])->name('cek-saldo');
-    Route::post('/scan-saldo', [KantinController::class, 'scanSaldo'])->name('scan-saldo');
-    Route::post('/transaksi-user', [KantinController::class, 'getTransaksiUser'])->name('transaksi-user');
-    
-    // ✅ TOPUP dengan SCAN RFID
-    Route::get('/topup', [KantinController::class, 'topup'])->name('topup');
-    Route::post('/cari-user-topup', [KantinController::class, 'cariUserTopup'])->name('cari-user-topup');
-    Route::post('/proses-topup', [KantinController::class, 'prosesTopup'])->name('proses-topup');
-    
-    Route::get('/bayar', [KantinController::class, 'bayar'])->name('bayar');
-    Route::post('/proses-bayar', [KantinController::class, 'prosesBayar'])->name('proses-bayar');
-    Route::get('/riwayat', [KantinController::class, 'riwayat'])->name('riwayat');
-    Route::post('/toggle-limit', [KantinController::class, 'toggleLimit'])->name('toggle-limit');
-});
+    // E-Kantin (HANYA ADMIN)
+    Route::middleware(['admin'])->prefix('kantin')->name('kantin.')->group(function () {
+        Route::get('/cek-saldo', [KantinController::class, 'cekSaldo'])->name('cek-saldo');
+        Route::post('/scan-saldo', [KantinController::class, 'scanSaldo'])->name('scan-saldo');
+        Route::post('/transaksi-user', [KantinController::class, 'getTransaksiUser'])->name('transaksi-user');
+        Route::resource('products', ProductController::class);
+        
+        Route::get('/topup', [KantinController::class, 'topup'])->name('topup');
+        Route::post('/cari-user-topup', [KantinController::class, 'cariUserTopup'])->name('cari-user-topup');
+        Route::post('/proses-topup', [KantinController::class, 'prosesTopup'])->name('proses-topup');
+        
+        Route::get('/bayar', [KantinController::class, 'bayar'])->name('bayar');
+        Route::post('/proses-bayar', [KantinController::class, 'prosesBayar'])->name('proses-bayar');
+        Route::get('/riwayat', [KantinController::class, 'riwayat'])->name('riwayat');
+        Route::post('/toggle-limit', [KantinController::class, 'toggleLimit'])->name('toggle-limit');
+    });
     
     // User Management (Admin)
-        Route::middleware(['admin'])->prefix('users')->name('users.')->group(function () {
+    Route::middleware(['admin'])->prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/', [UserController::class, 'store'])->name('store');
@@ -90,12 +93,12 @@ Route::middleware(['admin'])->prefix('kantin')->name('kantin.')->group(function 
     
     // Jadwal Sholat Management (Admin)
     Route::middleware(['admin'])->prefix('jadwal-sholat')->name('jadwal-sholat.')->group(function () {
-    Route::get('/', [JadwalSholatController::class, 'index'])->name('index');
-    Route::post('/sync', [JadwalSholatController::class, 'syncJadwal'])->name('sync');
-    Route::post('/bulk-override', [JadwalSholatController::class, 'bulkOverride'])->name('bulk-override');
-    Route::put('/{id}', [JadwalSholatController::class, 'update'])->name('update');
-    Route::delete('/{id}', [JadwalSholatController::class, 'destroy'])->name('destroy');
-});
+        Route::get('/', [JadwalSholatController::class, 'index'])->name('index');
+        Route::post('/sync', [JadwalSholatController::class, 'syncJadwal'])->name('sync');
+        Route::post('/bulk-override', [JadwalSholatController::class, 'bulkOverride'])->name('bulk-override');
+        Route::put('/{id}', [JadwalSholatController::class, 'update'])->name('update');
+        Route::delete('/{id}', [JadwalSholatController::class, 'destroy'])->name('destroy');
+    });
 
     // Pengaturan Waktu (Admin)
     Route::middleware(['admin'])->prefix('pengaturan-waktu')->name('pengaturan.waktu.')->group(function () {
