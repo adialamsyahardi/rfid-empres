@@ -1,66 +1,90 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# RFID e-Presensi & E-Kantin (rfid-empres)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 10 application for RFID-based attendance and e-canteen management.
+Implements school attendance, sholat attendance (based on daily jadwal), custom activity
+attendance, and e-canteen balance/topup/payment — all using RFID cards. Includes admin
+management for users, jadwal sholat, and presensi settings.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend**: PHP 8.1+, Laravel 10
+- **Auth**: Session auth, middleware `auth` and `admin`
+- **Frontend**: Vite 5, Bootstrap 5, Axios
+- **Database**: MySQL
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## MVP Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Presensi Sekolah**
+  - Scan RFID for `masuk` / `keluar` with late/early logic using `PengaturanWaktu`.
+  - Update keterangan: `hadir|izin|sakit|tanpa_keterangan`.
+  - View today’s presensi and list of users who haven’t checked in.
 
-## Learning Laravel
+- **Presensi Sholat**
+  - Scan RFID for `subuh|dzuhur|ashar|maghrib|isya` using daily `JadwalSholat`.
+  - Late calculation with statuses: terlalu awal, tepat waktu, terlambat.
+  - Manual entry for keterangan.
+  - Export CSV per tanggal.
+  - JSON endpoints for today’s jadwal and latest presensi.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Presensi Kustom**
+  - Admin can manage custom schedules.
+  - Scan RFID per schedule; auto status (tepat waktu/terlambat/terlalu awal) and minutes late.
+  - AJAX: latest presensi, stats, and list of users who haven’t presensi for a schedule.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **E-Kantin**
+  - Cek saldo (by RFID) and show limit status.
+  - Top up saldo (by RFID) and record transaksi.
+  - Pembayaran (by RFID) with per-user daily limit enforcement.
+  - Riwayat transaksi and toggle limit on/off per user.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Jadwal Sholat Management**
+  - Sync monthly jadwal from API `api.myquran.com`.
+  - Bulk override a waktu sholat for a month.
+  - Edit one day’s times, delete a day. Tracks manual edits.
 
-## Laravel Sponsors
+- **Pengaturan Waktu**
+  - Manage presensi windows and tolerances for `sekolah|sholat|kustom`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Getting Started
 
-### Premium Partners
+### Prerequisites
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+- PHP 8.1+
+- Composer
+- MySQL
+- Node.js 18+ (Vite 5)
 
-## Contributing
+### Setup
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. Copy env and set database config
+   ```bash
+   cp .env.example .env
+   ```
+2. Install PHP dependencies
+   ```bash
+   composer install
+   php artisan key:generate
+   ```
+3. Migrate database (seed optional but provides default users)
+   ```bash
+   php artisan migrate
+   php artisan db:seed # optional
+   ```
+4. Install frontend deps and build assets
+   ```bash
+   npm ci # or: npm install
+   npm run dev
+   ```
+5. Run the app
+   ```bash
+   php artisan serve
+   ```
 
-## Code of Conduct
+### Seeded Accounts (if you run seeder)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Admin: `admin@rfid.com` / `admin123`
+- Sample users: see `database/seeders/DatabaseSeeder.php`
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This software licensed under the [MIT license](https://opensource.org/licenses/MIT).
