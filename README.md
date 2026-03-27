@@ -4,6 +4,9 @@ Laravel 10 application for RFID-based attendance and e-canteen management.
 Implements school attendance, sholat attendance (based on daily jadwal), custom activity
 attendance, and e-canteen balance/topup/payment — all using RFID cards. Includes admin
 management for users, jadwal sholat, and presensi settings.
+Try It Yourself :
+https://rfid.adialamsyahadi.id
+`admin@admin.com` / `Demoo2212`
 
 ## Tech Stack
 
