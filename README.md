@@ -83,6 +83,9 @@ management for users, jadwal sholat, and presensi settings.
 ### Seeded Accounts (if you run seeder)
 
 - Admin: `admin@rfid.com` / `admin123`
+  or
+- Admin `admin@admin.com` / `Demoo2212`
+  https://rfid.adialamsyahardi.id
 - Sample users: see `database/seeders/DatabaseSeeder.php`
 
 ## License
