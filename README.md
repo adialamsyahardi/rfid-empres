@@ -6,7 +6,7 @@ attendance, and e-canteen balance/topup/payment — all using RFID cards. Includ
 management for users, jadwal sholat, and presensi settings.
 
 # Try It Yourself :
-https://rfid.adialamsyahadi.id
+https://rfid.adialamsyahardi.id
 `admin@admin.com` / `Demoo2212`
 
 ## Tech Stack
