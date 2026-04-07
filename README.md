@@ -5,7 +5,7 @@ Implements school attendance, sholat attendance (based on daily jadwal), custom 
 attendance, and e-canteen balance/topup/payment — all using RFID cards. Includes admin
 management for users, jadwal sholat, and presensi settings.
 
-# Try It Yourself :
+# Demo :
 https://rfid.adialamsyahardi.id
 `admin@admin.com` / `Demoo2212`
 
